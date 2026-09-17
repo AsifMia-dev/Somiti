@@ -1,0 +1,47 @@
+# Node
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# Runtime / environment
+.env
+.env.*.local
+.env.local
+.DS_Store
+
+# Build outputs
+dist/
+build/
+.out/
+.next/
+coverage/
+
+# Testing
+/coverage/
+
+# Prisma
+prisma/dev.db
+prisma/.env
+.prisma/
+
+# Editor / OS
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Dependency directories
+.pnp/
+.pnpm-store/
+
+# Misc
+*.tgz
+*.local
