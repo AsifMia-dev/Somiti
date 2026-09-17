@@ -16,9 +16,6 @@ function generateAccessToken(payload, expiresIn = '1h') {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 
-function verifyToken(token) {
-  return jwt.verify(token, JWT_SECRET);
-}
 
 async function registerUser({ email, password, name, phone }) {
   if (!name || !email || !password || !phone) {
@@ -86,8 +83,7 @@ async function loginUser({ email, password }) {
     user: {
       id: user.id,
       email: user.email,
-      full_name: user.full_name,
-      name: user.full_name,
+      name: user.name,
     },
   };
 }
