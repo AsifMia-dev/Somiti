@@ -46,12 +46,10 @@ async function registerUser({ email, password, name, phone }) {
   const token = generateAccessToken({ sub: user.id, email: user.email });
 
   return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    },
+    message: "Account created successfully",  
+    "data": {
+      "accessToken": token
+    }
   };
 }
 
@@ -78,17 +76,15 @@ async function loginUser({ email, password }) {
 
   const token = generateAccessToken({ sub: user.id, email: user.email });
 
-  return {
-    token,
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    },
-  };
+  return{
+    "message": "Login successful",
+    "data": {
+      "accessToken": token
+    }
+  }
 }
 
 module.exports = {
   registerUser,
-  loginUser,
+  loginUser
 };
