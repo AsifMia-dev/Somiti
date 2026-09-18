@@ -1,17 +1,21 @@
 const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
-  error.status(404);
+  error.statusCode = 404;
   next(error);
 };
 
 const errorHandler = (err, req, res, next) => {
-  if(err.status){
-    return res.status(err.status).json({error:err.message})
+  const statusCode = err.statusCode || err.status || 500;
+
+  if (statusCode === 404) {
+    return res.status(404).json({ error: err.message });
   }
-  return res.status(500).json({error: "Internal Server Error"})
+
+  console.log('server error');
+  return res.status(500).json({ error: 'Internal Server Error' });
 };
 
-module.exports = {
+module.exports = {   
   notFound,
   errorHandler,
 };

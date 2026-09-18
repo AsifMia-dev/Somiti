@@ -4,14 +4,6 @@ const prisma = require('../lib/prisma');
 const { JWT_SECRET } = require('../config/env');
 
 
-async function hashPassword(password) {
-  return bcrypt.hash(password, 11);
-}
-
-async function comparePassword(password, hash) {
-  return bcrypt.compare(password, hash);
-}
-
 function generateAccessToken(payload, expiresIn = '1h') {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
@@ -31,7 +23,7 @@ async function registerUser({ email, password, name, phone }) {
     throw error;
   }
 
-  const password_hash = await hashPassword(password);
+  const password_hash = await bcrypt.hash(password, 11);
 
 
   const user = await prisma.manager.create({
@@ -67,7 +59,7 @@ async function loginUser({ email, password }) {
     throw error;
   }
 
-  const ok = await comparePassword(password, user.password_hash);
+  const ok = await bcrypt.compare(password, user.password_hash);
   if (!ok) {
     const error = new Error('Invalid credentials');
     error.statusCode = 401;
