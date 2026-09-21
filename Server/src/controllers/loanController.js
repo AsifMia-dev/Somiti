@@ -30,8 +30,19 @@ async function createLoan(req, res) {
 
 async function getLoans(req, res) {
   try {
+    const result = await loanService.getAllLoans();
+    return res.status(200).json(result);
+  } catch (err) {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Failed to fetch loans';
+    return res.status(statusCode).json({ error: message });
+  }
+}
+
+async function getLoansByBorrower(req,res){
+  try {
     const borrowerId = req.query.borrowerId || req.params.borrowerId;
-    const result = await loanService.getLoans({ borrowerId });
+    const result = await loanService.getLoansByBorrower({ borrowerId });
     return res.status(200).json(result);
   } catch (err) {
     const statusCode = err.statusCode || 500;
@@ -81,6 +92,7 @@ async function deleteLoan(req, res) {
 module.exports = {
   createLoan,
   getLoans,
+  getLoansByBorrower,
   getLoanById,
   updateLoan,
   deleteLoan,
