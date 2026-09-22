@@ -6,12 +6,11 @@ async function authMiddleware(req, res, next) {
   const match = authHeader.match(/^Bearer\s+(.+)$/i);
   if (!match) return res.status(401).json({ error: 'Missing token' });
   const token = match[1];
-  console.log(token);
   try {
     const payload = jwt.verify(token, JWT_SECRET);
     req.user = payload; // { sub, email, iat, exp }
-    // console.log(payload);
-    console.log("User",req.user);
+    // Debug logging only when DEBUG env set
+    if (process.env.DEBUG) console.debug('auth payload set for user id', payload.sub);
     next();
   } catch (err) {
     console.error('JWT verify error:', err && err.message ? err.message : err);

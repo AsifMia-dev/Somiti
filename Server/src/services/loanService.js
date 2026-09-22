@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const installmentService = require('./installmentService')
 
 function toNumber(value, fieldName) {
   const number = Number(value);
@@ -15,6 +16,7 @@ function toNumber(value, fieldName) {
 async function ensureBorrowerExists(borrowerId) {
   const borrower = await prisma.borrower.findUnique({
     where: { id: Number(borrowerId) },
+    include: { somiti: true },
   });
 
   if (!borrower) {
@@ -26,38 +28,72 @@ async function ensureBorrowerExists(borrowerId) {
   return borrower;
 }
 
-async function createLoan({borrowerId,principalAmount,totalInstallment,weeklyInstallmentAmount,status,accumulation,}) {
-  if (!borrowerId) {
-    const error = new Error('Borrower is required');
-    error.statusCode = 400;
-    throw error;
+// Create New Loan
+async function createNewLoan(payload) {
+  const {
+    loan_type,
+    loan_amount,
+    interest_rate,
+    total_installment,
+    savings,
+    frequency,
+    borrower_id
+  } = payload || {};
+
+  if (!loan_type || !loan_amount || !borrower_id || !interest_rate || !total_installment) {
+    const err = new Error("Missing required loan fields");
+    err.statusCode = 400;
+    throw err;
   }
 
-  await ensureBorrowerExists(borrowerId);
+  const borrower = await ensureBorrowerExists(borrower_id);
 
-  const principal = toNumber(principalAmount, 'principalAmount');
-  const totalInstallments = toNumber(totalInstallment, 'totalInstallment');
-  const weeklyAmount = toNumber(weeklyInstallmentAmount, 'weeklyInstallmentAmount');
-  const accum = accumulation === undefined ? principal : toNumber(accumulation, 'accumulation');
+  const loan_amt = toNumber(loan_amount, 'loan_amount');
+  const totalInst = toNumber(total_installment, 'total_installment');
+  const interestRate = toNumber(interest_rate, 'interest_rate');
+  const Savings = savings !== undefined ? toNumber(savings, 'savings') : 0;
 
-  const loan = await prisma.loan.create({
-    data: {
-      borrower_id: Number(borrowerId),
-      principal_amount: principal,
-      total_installment: totalInstallments,
-      weekly_installment_amount: weeklyAmount,
-      status: status || 'ACTIVE',
-      accumulation: accum,
-    },
-    include: {
-      borrower: true,
-    },
-  });
+  const interest = loan_amt * (interestRate / 100);
+  const accumulation = loan_amt + interest;
+  const installment_amount = accumulation / totalInst;
+  const due_amount = accumulation - Savings;
 
-  return {
-    message: 'Loan created successfully',
-    data: loan,
+  const loanData = {
+    loan_type,
+    loan_amount: loan_amt,
+    interest_rate: interestRate,
+    total_installment: totalInst,
+    frequency: frequency || 'WEEKLY',
+    borrower_id: Number(borrower_id),
   };
+
+  const LoanAccountData = {
+    installment_amount,
+    due_amount: Number(due_amount),
+    savings: Savings,
+    collected_amount: 0,
+    fine: 0,
+    status: 'ACTIVE',
+  };
+
+  return await prisma.$transaction(async (tx) => {
+    const loan = await tx.loan.create({ data: loanData });
+
+    const loanAcc = await tx.loanAccount.create({
+      data: { ...LoanAccountData, loan_id: loan.id },
+    });
+
+    await installmentService.generateInstallments(
+      tx,
+      loan.id,
+      loan.borrower_id,
+      installment_amount,
+      loan.total_installment,
+      loan.frequency,
+    );
+
+    return { message: 'Loan created successfully', data: loan };
+  });
 }
 
 async function getAllLoans() {
@@ -116,12 +152,12 @@ async function updateLoan(id, payload = {}) {
     updates.principal_amount = toNumber(payload.principalAmount, 'principalAmount');
   }
 
-  if (payload.totalInstallment !== undefined) {
-    updates.total_installment = toNumber(payload.totalInstallment, 'totalInstallment');
+  if (payload.total_installment !== undefined) {
+    updates.total_installment = toNumber(payload.total_installment, 'total_installment');
   }
 
-  if (payload.weeklyInstallmentAmount !== undefined) {
-    updates.weekly_installment_amount = toNumber(payload.weeklyInstallmentAmount, 'weeklyInstallmentAmount');
+  if (payload.weeklyinstallment_amount !== undefined) {
+    updates.weekly_installment_amount = toNumber(payload.weeklyinstallment_amount, 'weeklyinstallment_amount');
   }
 
   if (payload.status !== undefined) {
@@ -161,7 +197,7 @@ async function deleteLoan(id) {
 }
 
 module.exports = {
-  createLoan,
+  createNewLoan,
   getAllLoans,
   getLoansByBorrower,
   getLoanById,

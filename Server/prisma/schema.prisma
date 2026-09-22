@@ -16,27 +16,28 @@ model Manager {
   somiti        Somiti?
 }
 
+enum Weekday {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
 model Somiti {
-  id                 Int           @id @default(autoincrement())
-  name               String        @unique
-  created_at         DateTime      @default(now())
-  owner_manager_id   Int           @unique
-  owner_manager      Manager       @relation(fields: [owner_manager_id], references: [id], onDelete: Cascade)
-  borrowers          Borrower[]
-  finance            SomitiFinance?
+  id                    Int             @id @default(autoincrement())
+  name                  String          @unique
+  created_at            DateTime        @default(now())
+  collection_day        Weekday         @default(THURSDAY)
+  monthly_collection_date Int           @default(5) 
+  owner_manager_id      Int             @unique
+  owner_manager         Manager         @relation(fields: [owner_manager_id], references: [id], onDelete: Cascade)
+  borrowers             Borrower[]
+  finance               SomitiFinance?
 
   @@index([owner_manager_id])
-}
-
-enum LoanStatus {
-  ACTIVE
-  PAID
-}
-
-enum InstallmentStatus {
-  PENDING
-  PAID
-  OVERDUE
 }
 
 model Borrower {
@@ -56,30 +57,62 @@ model Borrower {
   @@index([somiti_id])
 }
 
+enum LoanStatus {
+  ACTIVE
+  PAID
+}
+
+enum Frequency {
+  WEEKLY
+  MONTHLY
+}
+enum LoanType {
+  NEW
+  TOP_UP
+}
+
 model Loan {
-  id                        Int           @id @default(autoincrement())
-  principal_amount          Decimal       @db.Decimal(12, 2)
-  total_installment         Int
-  weekly_installment_amount Decimal       @db.Decimal(12, 2)
-  status                    LoanStatus    @default(ACTIVE)
-  created_at                DateTime      @default(now())
-  accumulation              Decimal       @db.Decimal(12, 2)
-  borrower_id               Int
-  borrower                  Borrower      @relation(fields: [borrower_id], references: [id], onDelete: Cascade)
-  installments              Installment[]
+  id             Int        @id @default(autoincrement())
+  loan_type      LoanType
+  loan_amount    Decimal    @db.Decimal(12, 2)
+  interest_rate  Decimal    @db.Decimal(5, 2)
+  total_installment  Int                         
+  frequency      Frequency  @default(WEEKLY)
+  created_at     DateTime   @default(now())
+  borrower_id    Int
+  borrower       Borrower   @relation(fields: [borrower_id], references: [id], onDelete: Cascade)
+  installments   Installment[]
+  account        LoanAccount?
 
   @@index([borrower_id])
 }
 
+model LoanAccount {
+  id               Int      @id @default(autoincrement())
+  installment_amount Decimal @db.Decimal(12, 2)   // shaptahik kisti er poriman
+  collected_amount Decimal  @db.Decimal(12, 2) @default(0)
+  savings        Decimal    @db.Decimal(12, 2) @default(0)
+  due_amount       Decimal  @db.Decimal(12, 2)
+  fine             Decimal  @db.Decimal(12, 2) @default(0)
+  status           LoanStatus @default(ACTIVE)
+  loan_id          Int      @unique
+  loan             Loan     @relation(fields: [loan_id], references: [id], onDelete: Cascade)
+}
+
+enum InstallmentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
 model Installment {
   id                 Int               @id @default(autoincrement())
-  week_number        Int
+  installNo          Int
+  due_date           DateTime
   installment_amount Decimal           @db.Decimal(12, 2)
   status             InstallmentStatus @default(PENDING)
   fine_amount        Decimal           @db.Decimal(12, 2) @default(0)
-  is_fine_paid       Boolean           @default(false)
   collected_at       DateTime?
-  due_amount         Decimal           @db.Decimal(12, 2)
   borrower_id        Int
   borrower           Borrower          @relation(fields: [borrower_id], references: [id], onDelete: Cascade)
   loan_id            Int

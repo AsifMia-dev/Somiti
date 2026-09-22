@@ -11,7 +11,9 @@ const errorHandler = (err, req, res, next) => {
     return res.status(404).json({ error: err.message });
   }
 
-  console.log('server error');
+  // Log server error details server-side, avoid leaking internals to clients
+  // Use console.error so it's visible in logs; do not print sensitive data
+  if (process.env.DEBUG) console.error(err && err.stack ? err.stack : err);
   return res.status(500).json({ error: 'Internal Server Error' });
 };
 

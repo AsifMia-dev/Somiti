@@ -3,21 +3,25 @@ const loanService = require('../services/loanService');
 async function createLoan(req, res) {
   try {
     const {
-      borrowerId,
-      principalAmount,
-      totalInstallment,
-      weeklyInstallmentAmount,
-      status,
-      accumulation,
+      loan_type,
+      loan_amount,
+      interest_rate,
+      total_installment,
+      installment_amount,
+      savings,
+      frequency,
+      borrower_id,
     } = req.body;
 
-    const result = await loanService.createLoan({
-      borrowerId,
-      principalAmount,
-      totalInstallment,
-      weeklyInstallmentAmount,
-      status,
-      accumulation,
+    const result = await loanService.createNewLoan({
+     loan_type,
+      loan_amount,
+      interest_rate,
+      total_installment,
+      installment_amount,
+      savings,
+      frequency,
+      borrower_id,
     });
 
     return res.status(201).json(result);

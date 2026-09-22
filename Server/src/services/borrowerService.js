@@ -5,11 +5,44 @@ function normalizeString(value) {
 }
 
 async function createBorrower({ fullName, phone, nid, fatherName, address, somitiId }) {
-    if (!fullName || !phone || !nid || !fatherName || !address || !somitiId) {
-      const err = new Error('Invalid credentials');
-      err.statusCode = 400;
-      throw err;
+  if (!fullName || !phone || !nid || !fatherName || !address || somitiId === undefined || somitiId === null) {
+    const err = new Error('All field required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Extract numeric somiti id safely (accept number, numeric string, or object with id/sub/somitiId)
+  function extractNumericId(v) {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string' && v.trim() !== '') {
+      const n = Number(v);
+      if (!Number.isNaN(n)) return n;
     }
+    if (typeof v === 'object' && v !== null) {
+      if (typeof v.id === 'number' && Number.isFinite(v.id)) return v.id;
+      if (typeof v.sub === 'number' && Number.isFinite(v.sub)) return v.sub;
+      if (typeof v.somitiId === 'number' && Number.isFinite(v.somitiId)) return v.somitiId;
+      if (typeof v.id === 'string' && v.id.trim() !== '') {
+        const n = Number(v.id);
+        if (!Number.isNaN(n)) return n;
+      }
+    }
+    return null;
+  }
+
+  const somitiNumericId = extractNumericId(somitiId);
+  if (somitiNumericId === null) {
+    const err = new Error('Invalid somiti');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const somiti = await prisma.somiti.findUnique({ where: { id: Number(somitiNumericId) } });
+  if (!somiti) {
+    const err = new Error('Somiti not found');
+    err.statusCode = 404;
+    throw err;
+  }
 
   const name = normalizeString(fullName);
   const nidNumber = normalizeString(nid);
@@ -31,7 +64,7 @@ async function createBorrower({ fullName, phone, nid, fatherName, address, somit
       nid_number: nidNumber,
       father_name: father || null,
       village_address: village || null,
-      somiti_id: Number(somitiId),
+      somiti_id: Number(somitiNumericId),
     },
   });
 
