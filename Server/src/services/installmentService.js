@@ -35,7 +35,6 @@ function getFirstDueDate(frequency, collectionDay, monthlyCollectionDate) {
 
 
 async function generateInstallments(tx, loan_id, borrower_id, installment_amount, total_installment, frequency){
-  console.log("installment")
     const borrower = await tx.borrower.findUnique({
         where: { id: borrower_id },
         include: { somiti: true },
@@ -78,33 +77,45 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
   return created;
 }
 
-// installment.service.js
-async function getCurrentWeekInstallments(somitiId) {
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay()); // back to Sunday
-  startOfWeek.setHours(0, 0, 0, 0);
 
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 7); // next Sunday (exclusive upper bound)
 
+async function fetchInstallmentsDue(somitiId, nextCollectionDate) {
   return await prisma.installment.findMany({
     where: {
-      due_date: { gte: startOfWeek, lt: endOfWeek },
+      due_date: { lte: nextCollectionDate },
       loan: {
         borrower: { somiti_id: Number(somitiId) },
       },
     },
     orderBy: { due_date: 'asc' },
     include: {
+      loan: true,
       borrower: { select: { id: true, full_name: true, phone: true } },
     },
   });
 }
 
 
+// installment.service.js
+async function getCurrentWeekInstallments({somitiId}) {
+   const somiti = await prisma.somiti.findUnique({
+    where: { id: Number(somitiId) },
+  });
+
+  const nextCollectionDate = getFirstDueDate(
+    'WEEKLY',
+    somiti.collection_day,
+    somiti.monthly_collection_date,
+  );
+
+  const installments = await fetchInstallmentsDue(somitiId, nextCollectionDate);
+
+  return { somiti, nextCollectionDate, installments };
+}
+
+
 
 module.exports={
     generateInstallments,
-    getCurrentWeekInstallments
+    getCurrentWeekInstallments,
 }

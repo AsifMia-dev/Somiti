@@ -6,6 +6,7 @@ const somitiRouter = require('./somiti');
 const dashboardRouter = require('./dashboard');
 const borrowerRouter = require('./borrower');
 const loanRouter = require('./loan');
+const installmentRouter = require('./installment')
 
 
 router.use('/auth', authRouter);
@@ -13,6 +14,7 @@ router.use('/somitis', somitiRouter);
 router.use('/dashboard', dashboardRouter);
 router.use('/borrowers', borrowerRouter);
 router.use('/loans', loanRouter);
+router.use('/installments',installmentRouter)
 
 
 module.exports = router;

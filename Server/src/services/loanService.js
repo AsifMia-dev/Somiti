@@ -39,6 +39,7 @@ async function createNewLoan(payload) {
     frequency,
     borrower_id
   } = payload || {};
+  if(loan_type !== "NEW") return{ message : "Loan must me new"};
 
   if (!loan_type || !loan_amount || !borrower_id || !interest_rate || !total_installment) {
     const err = new Error("Missing required loan fields");
@@ -47,6 +48,23 @@ async function createNewLoan(payload) {
   }
 
   const borrower = await ensureBorrowerExists(borrower_id);
+
+  // Prevent creating a new loan if borrower already has an ACTIVE loan of type NEW
+  const existingActiveNew = await prisma.loan.findFirst({
+    where: {
+      borrower_id: Number(borrower_id),
+      loan_type: 'NEW',
+      // loan status is stored on LoanAccount.status
+      account: { status: 'ACTIVE' },
+    },
+    include: { account: true },
+  });
+
+  if (existingActiveNew) {
+    const err = new Error('Borrower already has an active NEW loan');
+    err.statusCode = 400;
+    throw err;
+  }
 
   const loan_amt = toNumber(loan_amount, 'loan_amount');
   const totalInst = toNumber(total_installment, 'total_installment');
