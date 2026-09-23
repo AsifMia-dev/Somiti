@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  /* base */
+  --text: #5b5347;
+  --text-h: #2a251e;
+  --bg: #f3efe3;
+  --bg-raised: #faf7ee;
+  --border: #dad1b9;
+
+  /* brand */
+  --primary: #1e4638;
+  --primary-dark: #163229;
+  --accent: #b8842e;
+  --accent-deep: #8c6420;
+  --accent-bg: rgba(184, 132, 46, 0.1);
+  --accent-border: rgba(184, 132, 46, 0.5);
+
+  /* status */
+  --success: #3b6d11;
+  --success-bg: #e7efd9;
+  --danger: #9c3b2c;
+  --danger-bg: #f4e1db;
+  --info: #2e5c7a;
+
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: 'Noto Sans Bengali', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Noto Serif Bengali', Georgia, serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  font: 15px/145% var(--sans);
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+}
+
+h1, h2, h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--bg-raised);
+  color: var(--text-h);
+}
+
+::selection {
+  background: var(--accent-bg);
+}
