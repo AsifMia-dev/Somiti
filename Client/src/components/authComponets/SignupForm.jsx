@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner"
 
 
@@ -6,6 +7,9 @@ import { AuthContext } from "../../context/AuthContext";
 import { baseUrl } from "../../helper/baseUrlHelper";
 
 function SignupForm() {
+
+  const navigate = useNavigate()
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -55,7 +59,8 @@ function SignupForm() {
     e.preventDefault();
 
     if (!validate()) return;
-      setLoading(true);
+
+    setLoading(true);
     try {
       const res = await fetch(`${baseUrl}/auth/register`, {
         method: "POST",
@@ -72,6 +77,9 @@ function SignupForm() {
       if (res.ok) {
         toast.success(data.message);
         login(data.data.accessToken);
+        setTimeout(() => {
+          navigate("/onboarding-wizard");
+        }, 1000); 
       } else {
         toast.error(data.error);
       }
