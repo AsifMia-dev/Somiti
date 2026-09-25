@@ -35,7 +35,7 @@ async function registerUser({ email, password, name, phone }) {
     },
   });
 
-  const token = generateAccessToken({ sub: user.id, email: user.email });
+  const token = generateAccessToken({ sub: user.id, name: user.name, email: user.email });
 
   return {
     message: "Account created successfully",  
