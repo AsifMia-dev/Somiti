@@ -65,7 +65,7 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
   };
 
   if (collection_day !== undefined) somitiData.collection_day = collection_day;
-  if (monthly_collection_date !== undefined) somitiData.monthly_collection_date = monthly_collection_date;
+  if (monthly_collection_date !== undefined) somitiData.monthly_collection_date = Number(monthly_collection_date);
 
   const somiti = await prisma.somiti.create({
     data: somitiData,
