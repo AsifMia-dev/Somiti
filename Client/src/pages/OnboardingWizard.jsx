@@ -1,4 +1,4 @@
-import { useState,useContext } from "react";
+import { useState,useContext, use } from "react";
 import { useNavigate } from "react-router-dom";
 
 import ProgressBar from "../components/wizardComponents/ProgressBar";
@@ -12,10 +12,18 @@ import { toast } from "sonner"
 
 import { baseUrl } from "../helper/baseUrlHelper";
 import { AuthContext } from "../context/AuthContext";
+import { SomitiContext } from "../context/SomitiContext";
 
 const totalSteps = 6;
 
 function OnboardingWizard() {
+  const navigate = useNavigate();
+  const {storeSomiti,somiti} = useContext(SomitiContext);
+
+  if(somiti){
+    navigate("/dashboard")
+  }
+
   const [current, setCurrent] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
@@ -45,7 +53,6 @@ function OnboardingWizard() {
   };
 
   const { user, accessToken } = useContext(AuthContext);
-  const navigate = useNavigate();
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -64,11 +71,19 @@ function OnboardingWizard() {
 
       const data = await res.json();
 
-      if (res.ok) {
+      if (res.ok && user.sub === data.data.owner_manager_id) {
+        const {id,name,owner_manager_id} = data.data;
+        const somitiData = {
+          id,
+          name,
+          owner_manager_id
+        }
+        storeSomiti(somitiData)
+
         toast.success(data.message);
         navigate("/dashboard");
+
       } else {
-        console.log(data.error);
         toast.error(data.error);
       }
     } catch (err) {

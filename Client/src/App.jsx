@@ -1,11 +1,15 @@
 import RouteComponent from "./routes/routerComponets"
 import { Toaster } from "sonner"
 import { AuthProvider } from "./context/AuthContext";
+import { SomitiProvider } from "./context/SomitiContext";
+
 function App() {
    return(
     <AuthProvider>
-      <Toaster position="top-center" />
-      <RouteComponent />
+      <SomitiProvider>
+        <Toaster position="top-center" />
+        <RouteComponent />
+      </SomitiProvider>
     </AuthProvider>
    )
 }
