@@ -2,7 +2,7 @@ const { createSomiti } = require('../services/somitiService');
 
 async function create(req, res) {
   try {
-    const { name,collection_day,monthly_collection_date, netValue, handValue, loan_balance } = req.body;
+    const { name,collection_day,monthly_collection_date, handValue, loan_balance } = req.body;
     const managerId = req.user?.sub;
 
     const result = await createSomiti({
@@ -10,7 +10,6 @@ async function create(req, res) {
       name,
       collection_day,
       monthly_collection_date,
-      netValue,
       handValue,
       loan_balance,
     });

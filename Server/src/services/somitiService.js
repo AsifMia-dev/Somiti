@@ -10,7 +10,7 @@ function toNumber(value, fieldName) {
   return number;
 }
 
-async function createSomiti({ managerId, name, collection_day, monthly_collection_date, netValue, handValue, loan_balance }) {
+async function createSomiti({ managerId, name, collection_day, monthly_collection_date, handValue, loan_balance }) {
   if (!managerId) {
     const error = new Error('Manager is required');
     error.statusCode = 400;
@@ -24,7 +24,6 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
     throw error;
   }
 
-  const netWorth = toNumber(netValue, 'netValue');
   const cashBalance = toNumber(handValue, 'handValue');
   const loanBalance = toNumber(loan_balance, 'loan_balance');
 
@@ -56,17 +55,17 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
     owner_manager_id: Number(managerId),
     finance: {
       create: {
-        net_worth: netWorth,
         cash_balance: cashBalance,
         loan_balance: loanBalance,
-        total_fines: 0,
       },
     },
   };
 
+
+
   if (collection_day !== undefined) somitiData.collection_day = collection_day;
   if (monthly_collection_date !== undefined) somitiData.monthly_collection_date = Number(monthly_collection_date);
-
+  console.log(somitiData)
   const somiti = await prisma.somiti.create({
     data: somitiData,
     include: {
