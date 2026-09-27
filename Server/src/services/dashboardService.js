@@ -9,14 +9,8 @@ function toNumber(value) {
 }
 
 async function getBalanceSummary(somitiId) {
-  if (!somitiId || Number.isNaN(Number(somitiId))) {
-    const err = new Error('Invalid somiti id');
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const id = Number(somitiId);
-
+  const id = somitiId;
+   console.log(id);
   const finance = await prisma.somitiFinance.findUnique({ where: { somiti_id: id } });
   if (!finance) {
     const err = new Error('Somiti finance not found');
@@ -24,11 +18,9 @@ async function getBalanceSummary(somitiId) {
     throw err;
   }
 
+
   return {
-    netValue: toNumber(finance.net_worth),
-    loanBalance: toNumber(finance.loan_balance),
-    cashBalance: toNumber(finance.cash_balance),
-    fine: toNumber(finance.total_fines),
+    ...finance
   };
 }
 
