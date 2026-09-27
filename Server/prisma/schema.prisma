@@ -123,11 +123,12 @@ model Installment {
 }
 
 model SomitiFinance {
-  id           Int      @id @default(autoincrement())
-  net_worth    Decimal  @db.Decimal(12, 2)
-  cash_balance Decimal  @db.Decimal(12, 2)
-  loan_balance Decimal  @db.Decimal(12, 2)
-  total_fines  Decimal  @db.Decimal(12, 2)
-  somiti_id    Int      @unique
-  somiti       Somiti   @relation(fields: [somiti_id], references: [id], onDelete: Cascade)
+  id                      Int      @id @default(autoincrement())
+  cash_balance            Decimal  @db.Decimal(12, 2) @default(0)
+  total_interest_earned   Decimal  @db.Decimal(12, 2) @default(0)
+  loan_balance            Decimal  @db.Decimal(12, 2) @default(0)
+  total_fines_collected   Decimal  @default(0)
+  total_fines_outstanding Decimal  @default(0)
+  somiti_id               Int      @unique
+  somiti                  Somiti   @relation(fields: [somiti_id], references: [id], onDelete: Cascade)
 }
