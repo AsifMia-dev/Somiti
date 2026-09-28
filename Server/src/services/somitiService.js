@@ -10,6 +10,10 @@ function toNumber(value, fieldName) {
   return number;
 }
 
+async function findSomitiByManagerId(owner_manager_id){
+  return await prisma.somiti.findUnique({ where: { owner_manager_id: Number(owner_manager_id) } });
+}
+
 async function createSomiti({ managerId, name, collection_day, monthly_collection_date, handValue, loan_balance }) {
   if (!managerId) {
     const error = new Error('Manager is required');
@@ -42,8 +46,8 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
     error.statusCode = 409;
     throw error;
   }
-
-  const existingOwnerSomiti = await prisma.somiti.findUnique({ where: { owner_manager_id: Number(managerId) } });
+  
+  const existingOwnerSomiti = await findSomitiByManagerId(managerId)
   if (existingOwnerSomiti) {
     const error = new Error('This manager already owns a Somiti');
     error.statusCode = 409;
@@ -79,4 +83,6 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
   return { message: 'Somiti created successfully', data: somiti };
 }
 
-module.exports = { createSomiti };
+
+
+module.exports = { createSomiti,findSomitiByManagerId };
