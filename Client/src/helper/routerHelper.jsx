@@ -1,12 +1,16 @@
 import AuthPage from "../pages/AuthPage"
 import OnboardingWizard from "../pages/OnboardingWizard";
 import PrivateRoute from "../components/PrivateRoute";
+import DashboardPage from "../pages/DashboardPage";
+import SomitiRoute from "../components/SomitiRoute";
+import Layout from "../components/layout/Layout";
 export const allRouters = [
     //Public Routes
     {
-        path : "/auth",
+        path : "/",
         element : AuthPage,
-        isPrivate : false
+        isPrivate : false,
+        somiti: false
     },
 
     // Private routes
@@ -14,18 +18,33 @@ export const allRouters = [
         path:"/onboarding-wizard",
         element:OnboardingWizard,
         isPrivate : true,
+        somiti: false
+    },
+    {
+        path:"/dashboard",
+        element:DashboardPage,
+        isPrivate : true,
+        somiti: true
     }
    
 ];
 
 export const renderRouterElement = (route) =>{
-    if(route.isPrivate){
+    if(route.isPrivate && route.somiti){
+        return(
+            <SomitiRoute>
+                <Layout>
+                    <route.element />
+                </Layout>
+            </SomitiRoute>
+        )
+    }else if(route.isPrivate){
         return (
-            <PrivateRoute role={route.role}>
+            <PrivateRoute>
                 <route.element />
             </PrivateRoute>
         )
     }
-            
+
     return <route.element />
 }

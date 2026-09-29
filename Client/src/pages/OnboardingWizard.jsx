@@ -14,22 +14,20 @@ import { baseUrl } from "../helper/baseUrlHelper";
 import { AuthContext } from "../context/AuthContext";
 import { SomitiContext } from "../context/SomitiContext";
 
-const totalSteps = 6;
+const totalSteps = 5;
 
 function OnboardingWizard() {
+  console.log("OnboardingWizard");
   const navigate = useNavigate();
   const {storeSomiti,somiti} = useContext(SomitiContext);
 
-  if(somiti){
-    navigate("/dashboard")
-  }
+
 
   const [current, setCurrent] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     collection_day:"THURSDAY",
     monthly_collection_date:"5",
-    netValue:0,
     handValue: 0,
     loan_balance: 0,
   });
@@ -107,28 +105,21 @@ function OnboardingWizard() {
         {current === 1 && <StepSomitiName formData={formData} handleChange={handleChange} />}
 
         {current === 2 && (
-        <StepMoneyField
-          stepNumber={2} totalSteps={6}
-          title="নিট মূল্য" subtitle="সমিতির বর্তমান মোট নিট মূল্য জানা থাকলে দিন, না হলে খালি রাখুন"
-          fieldName="netValue" formData={formData} handleChange={handleChange}
-        />
-        )}
-        {current === 3 && (
           <StepMoneyField
             stepNumber={3} totalSteps={6}
             title="নগদ ব্যালেন্স" subtitle="সমিতির হাতে বর্তমানে থাকা নগদ অর্থের পরিমাণ"
             fieldName="handValue" formData={formData} handleChange={handleChange}
           />
         )}
-        {current === 4 && (
+        {current === 3 && (
           <StepMoneyField
             stepNumber={4} totalSteps={6}
             title="ঋণ ব্যালেন্স" subtitle="বর্তমানে বাইরে বিতরণ করা মোট ঋণের পরিমাণ"
             fieldName="loan_balance" formData={formData} handleChange={handleChange}
           />
         )}
-        {current === 5 && <StepCollectionSchedule formData={formData} handleChange={handleChange} />}
-        {current === 6 && <StepReview formData={formData} />}
+        {current === 4 && <StepCollectionSchedule formData={formData} handleChange={handleChange} />}
+        {current === 5 && <StepReview formData={formData} />}
 
         <WizardNav
           current={current}

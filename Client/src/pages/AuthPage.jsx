@@ -3,7 +3,7 @@ import SignupForm from "../components/authComponets/SignupForm"
 import LoginForm from "../components/authComponets/LoginForm"
 
 function AuthPage() {
-  const [tab, setTab] = useState('signup')
+  const [tab, setTab] = useState('login')
   return (
     <div className="min-h-screen flex items-center justify-center p-8 bg-[var(--primary)]">
       <div className="w-[400px] bg-[var(--bg-raised)] rounded-md px-[34px] pt-9 pb-[30px]">

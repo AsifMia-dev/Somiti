@@ -1,5 +1,12 @@
 import { useState } from "react";
+import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner"
+import { jwtDecode } from "jwt-decode";
+
 import { baseUrl } from "../../helper/baseUrlHelper";
+import { AuthContext } from "../../context/AuthContext";
+import { SomitiContext } from "../../context/SomitiContext";
 
 function LoginForm() {
   const [form, setForm] = useState({
@@ -7,9 +14,17 @@ function LoginForm() {
     password: "",
   });
 
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate()
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  const { login } = useContext(AuthContext);
+  const { storeSomiti } = useContext(SomitiContext)
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,10 +35,44 @@ function LoginForm() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      console.log(data);
+
+      if(!res.ok){
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success(data.message);
+
+      const token = data.data.accessToken;
+      login(token);
+
+      const managerId = jwtDecode(token).sub;
+      let hasSomiti = false;
+
+      try {
+        const response = await fetch(`${baseUrl}/somitis/manager/${managerId}`, {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const somitiData = await response.json();
+
+        if (somitiData.data) {
+          const { id, name, owner_manager_id } = somitiData.data;
+          storeSomiti({ id, name, owner_manager_id });
+          hasSomiti = true;
+      }
+      } catch (err) {
+        console.log(err);
+      }
+
+      setTimeout(() => {
+        navigate(hasSomiti ? "/dashboard" : "/onboarding-wizard");
+      }, 1000);
+      
     } catch (err) {
       console.error(err);
     }
+    
   };
 
   return (
