@@ -7,9 +7,8 @@ function StepReview({ formData }) {
   const rows = [
     { label: "ব্যবস্থাপক", value: user?.name },
     { label: "সমিতির নাম", value: formData.name },
-    { label: "নিট মূল্য", value: `৳${formData.netValue || 0}` },
-    { label: "নগদ ব্যালেন্স", value: `৳${formData.cashBalance || 0}` },
-    { label: "ঋণ ব্যালেন্স", value: `৳${formData.loanBalance || 0}` },
+    { label: "নগদ ব্যালেন্স", value: `৳${formData.handValue || 0}` },
+    { label: "ঋণ ব্যালেন্স", value: `৳${formData.loan_balance || 0}` },
     { label: "সাপ্তাহিক কালেকশন দিন", value: formData.collection_day },
     { label: "মাসিক কালেকশন তারিখ", value: formData.monthly_collection_date },
   ];

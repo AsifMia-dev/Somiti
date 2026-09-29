@@ -1,13 +1,12 @@
 import Sidebar from "../Sidebar";
-import { Outlet } from "react-router-dom";
 
-function Layout() {
+function Layout({ children }) {
   return (
-    <div>
+    <div className="w-full min-h-screen grid grid-cols-[232px_1fr]">
       <Sidebar />
-      <Outlet /> 
+      <main className="p-8 px-11 overflow-auto">{children}</main>
     </div>
   );
 }
 
-export default Layout
+export default Layout;

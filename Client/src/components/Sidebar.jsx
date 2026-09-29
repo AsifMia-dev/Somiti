@@ -64,7 +64,7 @@ function Sidebar() {
   const { user } = useContext(AuthContext);
   const { somiti } = useContext(SomitiContext);
 
-  const firstWord = somiti?.name?.split(" ")[0] || "সো";
+  const firstWord = somiti?.name?.split("")[0] || "সো";
 
   return (
     <aside className="w-full h-full bg-[var(--primary)] text-[#EDE7D6] p-7 px-5 flex flex-col">
