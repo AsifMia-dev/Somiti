@@ -30,14 +30,8 @@ async function createBorrower({ fullName, phone, nid, fatherName, address, somit
     return null;
   }
 
-  const somitiNumericId = extractNumericId(somitiId);
-  if (somitiNumericId === null) {
-    const err = new Error('Invalid somiti');
-    err.statusCode = 400;
-    throw err;
-  }
 
-  const somiti = await prisma.somiti.findUnique({ where: { id: Number(somitiNumericId) } });
+  const somiti = await prisma.somiti.findUnique({ where: { id: Number(somitiId) } });
   if (!somiti) {
     const err = new Error('Somiti not found');
     err.statusCode = 404;
@@ -64,7 +58,7 @@ async function createBorrower({ fullName, phone, nid, fatherName, address, somit
       nid_number: nidNumber,
       father_name: father || null,
       village_address: village || null,
-      somiti_id: Number(somitiNumericId),
+      somiti_id: Number(somitiId),
     },
   });
 

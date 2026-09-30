@@ -4,7 +4,8 @@ async function createBorrower(req, res) {
   try {
     const { fullName, phone, nid, fatherName, address } = req.body;
 
-    const somitiId = req.params;
+    const {somitiId} = req.params;
+    console.log(somitiId);
 
     const result = await borrowerService.createBorrower({ fullName, phone, nid, fatherName, address, somitiId });
 
