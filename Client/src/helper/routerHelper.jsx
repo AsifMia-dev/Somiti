@@ -4,6 +4,7 @@ import PrivateRoute from "../components/PrivateRoute";
 import DashboardPage from "../pages/DashboardPage";
 import SomitiRoute from "../components/SomitiRoute";
 import Layout from "../components/layout/Layout";
+import AddBorrowerPage from "../pages/AddBorrowerPage";
 export const allRouters = [
     //Public Routes
     {
@@ -24,6 +25,12 @@ export const allRouters = [
         path:"/dashboard",
         element:DashboardPage,
         isPrivate : true,
+        somiti: true
+    },
+    {
+        path: "/borrowers/add",
+        element: AddBorrowerPage,
+        isPrivate: true,
         somiti: true
     }
    
