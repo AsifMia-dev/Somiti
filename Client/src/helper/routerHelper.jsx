@@ -5,6 +5,8 @@ import DashboardPage from "../pages/DashboardPage";
 import SomitiRoute from "../components/SomitiRoute";
 import Layout from "../components/layout/Layout";
 import AddBorrowerPage from "../pages/AddBorrowerPage";
+import BorrowersPage from "../pages/BorrowersPage";
+
 export const allRouters = [
     //Public Routes
     {
@@ -30,6 +32,12 @@ export const allRouters = [
     {
         path: "/borrowers/add",
         element: AddBorrowerPage,
+        isPrivate: true,
+        somiti: true
+    },
+    {
+        path: "/borrowers",
+        element: BorrowersPage,
         isPrivate: true,
         somiti: true
     }

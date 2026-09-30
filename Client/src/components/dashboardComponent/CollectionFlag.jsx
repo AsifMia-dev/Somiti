@@ -10,6 +10,7 @@ function CollectionFlag({ nextCollectionDate, dueCount }) {
     day: "numeric",
     month: "long",
   });
+  console.log(formattedDate);
 
   return (
     <div className="flex items-center gap-2 bg-[var(--bg-raised)] border border-[var(--border)] px-3.5 py-2 rounded text-[13.5px] text-[var(--primary-dark)]">

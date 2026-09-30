@@ -28,7 +28,9 @@ function DashboardPage() {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((res) => res.json())
-      .then((data) => setInstallmentData(data))
+      .then((data) => {
+        setInstallmentData(data)
+      })
       .catch((err) => console.error(err));
   }, [somiti?.id]);
 
