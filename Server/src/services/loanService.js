@@ -114,11 +114,15 @@ async function createNewLoan(payload) {
   });
 }
 
-async function getAllLoans() {
-  return await prisma.loan.findMany({
-    include: { borrower: true },
-    orderBy: { created_at: 'desc' },
+async function getAllLoans(somitiId) {
+  const loans = await prisma.loan.findMany({
+    where: {
+      borrower: {
+        somiti_id: somitiId
+      }
+    }
   });
+  return loans;
 }
 
 async function getLoansByBorrower(borrowerId) {

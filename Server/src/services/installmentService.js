@@ -1,12 +1,13 @@
 const prisma = require('../lib/prisma');
 
+const DAY_MAP = {
+  SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3,
+  THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
+};
+
 function getFirstDueDate(frequency, collectionDay, monthlyCollectionDate) {
   if (frequency === 'WEEKLY') {
-    const dayMap = {
-      SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3,
-      THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
-    };
-    const targetDay = dayMap[collectionDay];
+    const targetDay = DAY_MAP[collectionDay];
 
     const date = new Date();
     const currentDay = date.getDay();
@@ -95,6 +96,45 @@ async function fetchInstallmentsDue(somitiId, nextCollectionDate) {
   });
 }
 
+const getCollectionDate = (collectionDay, monthlyCollectionDate, frequency) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let collectionDate;
+
+  if (frequency === 'WEEKLY') {
+    const targetDay = DAY_MAP[collectionDay];
+    if (targetDay === undefined) {
+      throw new Error(`Invalid collection day: ${collectionDay}`);
+    }
+    const daysUntil = (targetDay - today.getDay() + 7) % 7; // 0 when today is the day
+    collectionDate = new Date(today);
+    collectionDate.setDate(today.getDate() + daysUntil);
+  } else if (frequency === 'MONTHLY') {
+    // clamp so day 31 doesn't overflow in shorter months
+    const buildDate = (year, month) => {
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return new Date(year, month, Math.min(monthlyCollectionDate, lastDay));
+    };
+
+    collectionDate = buildDate(today.getFullYear(), today.getMonth());
+
+    // only move to next month if this month's date has already passed
+    if (collectionDate < today) {
+      collectionDate = buildDate(today.getFullYear(), today.getMonth() + 1);
+    }
+  } else {
+    throw new Error(`Unsupported frequency: ${frequency}`);
+  }
+
+  const daysUntil = Math.round((collectionDate - today) / (1000 * 60 * 60 * 24));
+
+  return {
+    collectionDate,
+    isCollectionDay: daysUntil === 0,
+    daysUntil,
+  };
+};
 
 // installment.service.js
 async function getCurrentWeekInstallments({somitiId}) {
@@ -102,15 +142,11 @@ async function getCurrentWeekInstallments({somitiId}) {
     where: { id: Number(somitiId) },
   });
 
-  const nextCollectionDate = getFirstDueDate(
-    'WEEKLY',
-    somiti.collection_day,
-    somiti.monthly_collection_date,
-  );
+  const collectionInfo = getCollectionDate(somiti.collection_day, somiti.monthly_collection_date, 'WEEKLY');
 
-  const installments = await fetchInstallmentsDue(somitiId, nextCollectionDate);
+  const installments = await fetchInstallmentsDue(somitiId, collectionInfo.collectionDate);
 
-  return { somiti, nextCollectionDate, installments };
+  return {collectionInfo, installments};
 }
 
 

@@ -4,7 +4,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const { createBorrower, getBorrowers, updateBorrower, deleteBorrower } = require('../controllers/borrowerController');
 
 router.post('/:somitiId', authMiddleware, createBorrower);
-router.get('/', authMiddleware, getBorrowers);
+router.get('/:somitiId', authMiddleware, getBorrowers);
 router.put('/:id', authMiddleware, updateBorrower);
 router.delete('/:id', authMiddleware, deleteBorrower);
 

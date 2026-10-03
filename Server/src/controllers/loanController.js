@@ -33,8 +33,11 @@ async function createLoan(req, res) {
 }
 
 async function getLoans(req, res) {
+  console.log("Inside getLoans controller");
+  const {somitiId} = req.params;
   try {
-    const result = await loanService.getAllLoans();
+    const result = await loanService.getAllLoans(Number(somitiId));
+    console.log("Loans fetched successfully:", result);
     return res.status(200).json(result);
   } catch (err) {
     const statusCode = err.statusCode || 500;

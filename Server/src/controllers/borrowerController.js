@@ -19,7 +19,7 @@ async function createBorrower(req, res) {
 
 async function getBorrowers(req, res) {
   try {
-    const somitiId = req.user?.somitiId || req.user?.sub;
+    const { somitiId } = req.params;
     const result = await borrowerService.getBorrowers(somitiId);
     return res.status(200).json(result);
   } catch (err) {

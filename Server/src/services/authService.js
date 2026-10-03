@@ -66,7 +66,7 @@ async function loginUser({ email, password }) {
     throw error;
   }
 
-  const token = generateAccessToken({ sub: user.id, email: user.email });
+  const token = generateAccessToken({ sub: user.id, name: user.name, email: user.email });
 
   return{
     "message": "Login successful",
