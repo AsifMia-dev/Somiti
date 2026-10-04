@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+
+const authMiddleware = require('../middlewares/authMiddleware');
+const {getCollectionSheet} = require('../controllers/installmentController');
+
+router.get('/:somitiId', authMiddleware, getCollectionSheet);
+// router.post('/:id/collect', authMiddleware, getCollectionSheet);
+
+module.exports = router;
