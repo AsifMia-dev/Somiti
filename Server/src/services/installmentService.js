@@ -149,7 +149,7 @@ const getCollectionDate = (collectionDay, monthlyCollectionDate, frequency) => {
   };
 };
 
-// installment.service.js
+
 async function getCollectionSheet({somitiId}) {
    const somiti = await prisma.somiti.findUnique({
     where: { id: Number(somitiId) },
@@ -166,9 +166,89 @@ async function getCollectionSheet({somitiId}) {
   return {collectionInfo, installments};
 }
 
+async function collect({ somitiId, installmentId }) {
+  return prisma.$transaction(async (tx) => {
+    const inst = await tx.installment.findFirst({
+      where: { id: installmentId, borrower: { somiti_id: somitiId } },
+      select: { id: true, loan_id: true, installment_amount: true, fine_amount: true },
+    });
+    if (!inst) {
+      const error = new Error('কিস্তি পাওয়া যায়নি');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const claimed = await tx.installment.updateMany({
+      where: { id: inst.id, status: { in: ['PENDING', 'OVERDUE'] } },
+      data: { status: 'PAID', collected_at: new Date() },
+    });
+    if (claimed.count === 0) {
+      const error = new Error('এই কিস্তি আগেই আদায় হয়েছে');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const amount = Number(inst.installment_amount);
+    const fine = Number(inst.fine_amount ?? 0);
+    const totalCollected = amount + fine;
+
+    // bump the counter and read the loan terms in one query
+    const loan = await tx.loan.update({
+      where: { id: inst.loan_id },
+      data: { completed_installment: { increment: 1 } },
+      select: {
+        loan_amount: true,
+        interest_rate: true,
+        total_installment: true,
+        completed_installment: true,
+      },
+    });
+
+    const interestPart = Number(
+      ((Number(loan.loan_amount) * Number(loan.interest_rate)) / 100 / loan.total_installment).toFixed(2)
+    );
+    const principalPart = amount - interestPart;
+
+    await tx.somitiFinance.update({
+      where: { somiti_id: somitiId },
+      data: {
+        cash_balance: { increment: totalCollected },
+        loan_balance: { decrement: principalPart },
+        total_interest_earned: { increment: interestPart },
+        total_fines_collected: { increment: fine },
+        total_fines_outstanding: { decrement: fine },
+      },
+    });
+
+    await tx.loanAccount.update({
+      where: { loan_id: inst.loan_id },
+      data: {
+        collected_amount: { increment: amount },
+        due_amount: { decrement: amount },
+      },
+    });
+
+    const loanCompleted = loan.completed_installment >= loan.total_installment;
+    if (loanCompleted) {
+      await tx.loanAccount.update({
+        where: { loan_id: inst.loan_id },
+        data: { status: 'COMPLETED' },
+      });
+    }
+
+    return {
+      installmentId: inst.id,
+      status: 'PAID',
+      amount,
+      fine,
+      loanCompleted,
+    };
+  });
+}
 
 
 module.exports={
     generateInstallments,
-    getCollectionSheet
+    getCollectionSheet,
+    collect
 }
