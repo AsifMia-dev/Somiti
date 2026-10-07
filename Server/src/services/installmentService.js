@@ -250,5 +250,6 @@ async function collect({ somitiId, installmentId }) {
 module.exports={
     generateInstallments,
     getCollectionSheet,
-    collect
+    collect,
+    getCollectionDate
 }

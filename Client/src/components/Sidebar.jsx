@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { SomitiContext } from "../context/SomitiContext";
@@ -60,11 +60,19 @@ const navItems = [
   },
 ];
 
-function Sidebar() {
-  const { user } = useContext(AuthContext);
-  const { somiti } = useContext(SomitiContext);
 
-  const firstWord = somiti?.name?.split("")[0] || "সো";
+function Sidebar() {
+  const { user, logout } = useContext(AuthContext);
+  const { somiti } = useContext(SomitiContext);
+  const navigate = useNavigate();
+
+  const firstWord = somiti?.name?.[0] || "সো";
+
+  const handleLogout = () => {
+    if (!window.confirm("আপনি কি লগআউট করতে চান?")) return;
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside className="w-full h-full bg-[var(--primary)] text-[#EDE7D6] p-7 px-5 flex flex-col">
@@ -96,10 +104,26 @@ function Sidebar() {
         ))}
       </nav>
 
-      <div className="mt-auto pt-5 border-t border-white/10 text-[12.5px] text-[#A79E86] leading-relaxed">
-        ম্যানেজার: {user?.name || "..."}
-        <br />
-        {somiti?.name || "..."}
+      {/* bottom section */}
+      <div className="mt-auto pt-5 border-t border-white/10">
+        <div className="text-[12.5px] text-[#A79E86] leading-relaxed mb-3">
+          ম্যানেজার: {user?.name || "..."}
+          <br />
+          {somiti?.name || "..."}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded text-[14.5px] text-[#CFC7AE] border-l-2 border-transparent hover:bg-white/5 hover:text-[#EDE7D6] cursor-pointer"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          লগআউট
+        </button>
       </div>
     </aside>
   );

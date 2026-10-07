@@ -7,6 +7,7 @@ import StatsGrid from "../components/dashboardComponent/StatsGrid";
 import CollectionFlag from "../components/dashboardComponent/CollectionFlag";
 import TodaysLedgerTable from "../components/dashboardComponent/TodaysLedgerTable";
 import QuickActions from "../components/dashboardComponent/QuickActions";
+import { toast } from "sonner"
 
 function DashboardPage() {
   const { somiti } = useContext(SomitiContext);
@@ -20,6 +21,8 @@ function DashboardPage() {
   const [installments, setInstallments] = useState([]);
   const [collectionInfo, setCollectionInfo] = useState({});
   const [loading, setLoading] = useState(true);
+  const [overdue, setOverdue] = useState([]);
+  const [collectingId, setCollectingId] = useState(null);
 
   useEffect(() => {
   if (!somiti?.id || !accessToken) return;
@@ -35,7 +38,7 @@ function DashboardPage() {
     try {
       const [summaryRes, installmentRes] = await Promise.all([
         fetch(`${baseUrl}/dashboard/${somiti.id}/balance-summary`, options),
-        fetch(`${baseUrl}/installments/${somiti.id}`, options),
+        fetch(`${baseUrl}/installment-sheet/${somiti.id}`, options),
       ]);
 
       if (!summaryRes.ok || !installmentRes.ok) {
@@ -46,8 +49,9 @@ function DashboardPage() {
       const installmentJson = await installmentRes.json();
 
       setSummary(summaryJson.data);
-      setInstallments(installmentJson.installments ?? []);
+      setInstallments(installmentJson.installments.thisWeek ?? []);
       setCollectionInfo(installmentJson.collectionInfo ?? {});
+      setOverdue(installmentJson.installments.overdue ?? []);
     } catch (err) {
       if (err.name !== "AbortError") console.error(err);
     } finally {
@@ -58,6 +62,35 @@ function DashboardPage() {
   load();
   return () => controller.abort();
   }, []);
+
+  const handleCollect = async (installmentId) => {
+    setCollectingId(installmentId);
+    try {
+      const res = await fetch(`${baseUrl}/installment-sheet/${somiti.id}/${installmentId}/collect`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      console.log("Collect response:", res);
+      if (!res.ok) throw new Error("আদায় করা যায়নি");
+      
+      const result = await res.json();
+      console.log("Collect result:", result.data);
+      setInstallments((rows) =>
+        rows.map((r) =>
+          r.id === result.data.installmentId
+            ? { ...r, status: result.data.status, loanCompleted: result.data.loanCompleted }
+            : r
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      toast.error(err.error); // replace with your own toast later
+    } finally {
+      setCollectingId(null);
+    }
+  };
+
+  console.log('Installments:', installments);
 
   if (loading) return <div>লোড হচ্ছে...</div>;
 
@@ -75,7 +108,11 @@ function DashboardPage() {
 
       <NetWorthHero finance={summary} />
       <StatsGrid finance={summary} todayCollection={summary.todayCollection} overdue={summary.overdue} />
-      <TodaysLedgerTable installments={installments} />
+      <TodaysLedgerTable
+          installments={installments}
+          onCollect={handleCollect}
+          collectingId={collectingId}
+       />
       <QuickActions />
     </>
   );
