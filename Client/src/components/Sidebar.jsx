@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { NavLink, useNavigate } from "react-router-dom";
+=======
+import { NavLink } from "react-router-dom";
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { SomitiContext } from "../context/SomitiContext";
@@ -60,6 +64,7 @@ const navItems = [
   },
 ];
 
+<<<<<<< HEAD
 
 function Sidebar() {
   const { user, logout } = useContext(AuthContext);
@@ -73,6 +78,13 @@ function Sidebar() {
     logout();
     navigate("/login", { replace: true });
   };
+=======
+function Sidebar() {
+  const { user } = useContext(AuthContext);
+  const { somiti } = useContext(SomitiContext);
+
+  const firstWord = somiti?.name?.split("")[0] || "সো";
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 
   return (
     <aside className="w-full h-full bg-[var(--primary)] text-[#EDE7D6] p-7 px-5 flex flex-col">
@@ -104,6 +116,7 @@ function Sidebar() {
         ))}
       </nav>
 
+<<<<<<< HEAD
       {/* bottom section */}
       <div className="mt-auto pt-5 border-t border-white/10">
         <div className="text-[12.5px] text-[#A79E86] leading-relaxed mb-3">
@@ -124,6 +137,12 @@ function Sidebar() {
           </svg>
           লগআউট
         </button>
+=======
+      <div className="mt-auto pt-5 border-t border-white/10 text-[12.5px] text-[#A79E86] leading-relaxed">
+        ম্যানেজার: {user?.name || "..."}
+        <br />
+        {somiti?.name || "..."}
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
       </div>
     </aside>
   );

@@ -7,7 +7,10 @@ import StatsGrid from "../components/dashboardComponent/StatsGrid";
 import CollectionFlag from "../components/dashboardComponent/CollectionFlag";
 import TodaysLedgerTable from "../components/dashboardComponent/TodaysLedgerTable";
 import QuickActions from "../components/dashboardComponent/QuickActions";
+<<<<<<< HEAD
 import { toast } from "sonner"
+=======
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 
 function DashboardPage() {
   const { somiti } = useContext(SomitiContext);
@@ -21,8 +24,11 @@ function DashboardPage() {
   const [installments, setInstallments] = useState([]);
   const [collectionInfo, setCollectionInfo] = useState({});
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
   const [overdue, setOverdue] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
+=======
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 
   useEffect(() => {
   if (!somiti?.id || !accessToken) return;
@@ -38,7 +44,11 @@ function DashboardPage() {
     try {
       const [summaryRes, installmentRes] = await Promise.all([
         fetch(`${baseUrl}/dashboard/${somiti.id}/balance-summary`, options),
+<<<<<<< HEAD
         fetch(`${baseUrl}/installment-sheet/${somiti.id}`, options),
+=======
+        fetch(`${baseUrl}/installments/${somiti.id}`, options),
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
       ]);
 
       if (!summaryRes.ok || !installmentRes.ok) {
@@ -49,9 +59,14 @@ function DashboardPage() {
       const installmentJson = await installmentRes.json();
 
       setSummary(summaryJson.data);
+<<<<<<< HEAD
       setInstallments(installmentJson.installments.thisWeek ?? []);
       setCollectionInfo(installmentJson.collectionInfo ?? {});
       setOverdue(installmentJson.installments.overdue ?? []);
+=======
+      setInstallments(installmentJson.installments ?? []);
+      setCollectionInfo(installmentJson.collectionInfo ?? {});
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
     } catch (err) {
       if (err.name !== "AbortError") console.error(err);
     } finally {
@@ -63,6 +78,7 @@ function DashboardPage() {
   return () => controller.abort();
   }, []);
 
+<<<<<<< HEAD
   const handleCollect = async (installmentId) => {
     setCollectingId(installmentId);
     try {
@@ -92,6 +108,8 @@ function DashboardPage() {
 
   console.log('Installments:', installments);
 
+=======
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
   if (loading) return <div>লোড হচ্ছে...</div>;
 
   return (
@@ -108,11 +126,15 @@ function DashboardPage() {
 
       <NetWorthHero finance={summary} />
       <StatsGrid finance={summary} todayCollection={summary.todayCollection} overdue={summary.overdue} />
+<<<<<<< HEAD
       <TodaysLedgerTable
           installments={installments}
           onCollect={handleCollect}
           collectingId={collectingId}
        />
+=======
+      <TodaysLedgerTable installments={installments} />
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
       <QuickActions />
     </>
   );

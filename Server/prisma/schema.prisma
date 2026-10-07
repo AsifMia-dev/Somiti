@@ -60,7 +60,10 @@ model Borrower {
 enum LoanStatus {
   ACTIVE
   PAID
+<<<<<<< HEAD
   COMPLETED
+=======
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 }
 
 enum Frequency {
@@ -77,8 +80,12 @@ model Loan {
   loan_type      LoanType
   loan_amount    Decimal    @db.Decimal(12, 2)
   interest_rate  Decimal    @db.Decimal(5, 2)
+<<<<<<< HEAD
   total_installment  Int
   completed_installment Int @default(0)                         
+=======
+  total_installment  Int                         
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
   frequency      Frequency  @default(WEEKLY)
   created_at     DateTime   @default(now())
   borrower_id    Int

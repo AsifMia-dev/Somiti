@@ -28,7 +28,10 @@
     "json": "^11.0.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
+<<<<<<< HEAD
     "node-cron": "^4.6.0",
+=======
+>>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.23.0"
