@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { SomitiContext } from "../context/SomitiContext";
 import { AuthContext } from "../context/AuthContext";
 import { baseUrl } from "../helper/baseUrlHelper";
@@ -25,17 +25,17 @@ function DashboardPage() {
   const [overdue, setOverdue] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
 
-  useEffect(() => {
-  if (!somiti?.id || !accessToken) return;
+  const loadDashboard = useCallback(async () => {
+    if (!somiti?.id || !accessToken) return;
 
-  const controller = new AbortController();
-  const options = {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    signal: controller.signal,
-  };
+    const controller = new AbortController();
+    const options = {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: controller.signal,
+    };
 
-  const load = async () => {
     setLoading(true);
+
     try {
       const [summaryRes, installmentRes] = await Promise.all([
         fetch(`${baseUrl}/dashboard/${somiti.id}/balance-summary`, options),
@@ -53,17 +53,16 @@ function DashboardPage() {
       setInstallments(installmentJson.installments.thisWeek ?? []);
       setCollectionInfo(installmentJson.collectionInfo ?? {});
       setOverdue(installmentJson.installments.overdue ?? []);
-      console.log("Installments loaded:", installmentJson.installments);
     } catch (err) {
       if (err.name !== "AbortError") console.error(err);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
-  };
+  }, [somiti?.id, accessToken]);
 
-  load();
-  return () => controller.abort();
-  }, []);
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
   const handleCollect = async (installmentId) => {
     setCollectingId(installmentId);
@@ -74,22 +73,13 @@ function DashboardPage() {
       });
       if (!res.ok) throw new Error("আদায় করা যায়নি");
       const result = await res.json();
-  
 
-      setInstallments((rows) =>
-        rows.map((r) =>
-          r.id === result.data.installmentId
-            ? { ...r, status: result.data.status, loanCompleted: result.data.loanCompleted }
-            : r
-        )
-      );
-
-      setOverdue((rows) => rows.filter((r) => r.id !== result.data.installmentId));
+      await loadDashboard();
       toast.success("কিস্তি সফলভাবে আদায় করা হয়েছে");
 
     } catch (err) {
       console.error(err);
-      toast.error(err.error); // replace with your own toast later
+      toast.error(err.error || "আদায় করা যায়নি");
     } finally {
       setCollectingId(null);
     }

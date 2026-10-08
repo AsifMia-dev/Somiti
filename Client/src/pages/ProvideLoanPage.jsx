@@ -6,6 +6,23 @@ import { SomitiContext } from "../context/SomitiContext";
 import { baseUrl } from "../helper/baseUrlHelper";
 import BackButton from "../components/BackButton";
 
+function ArrowLeftIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="size-4"
+      aria-hidden="true"
+    >
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
 function ProvideLoanPage() {
   const { accessToken } = useContext(AuthContext);
   const { somiti } = useContext(SomitiContext);
@@ -18,6 +35,8 @@ function ProvideLoanPage() {
     loan_amount: "",
     interest_rate: "10",
     total_installment: "",
+    savings: "",
+    frequency: "WEEKLY",
   });
   const [installmentAmount, setInstallmentAmount] = useState(0);
   const [errors, setErrors] = useState({});
@@ -66,7 +85,7 @@ function ProvideLoanPage() {
     setLoading(true);
     try {
       const [res] = await Promise.all([
-        fetch(`${baseUrl}/loans`, {
+        fetch(`${baseUrl}/loans/${somiti.id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -78,9 +97,9 @@ function ProvideLoanPage() {
             interest_rate: Number(form.interest_rate),
             total_installment: Number(form.total_installment),
             installment_amount: installmentAmount,
-            savings: 0,
-            frequency: "WEEKLY",
-            borrower_id: Number(form.borrower_id),
+            savings: Number(form.savings) || 0,
+            frequency: form.frequency || "WEEKLY",
+            borrower_id: form.borrower_id,
           }),
         }),
         new Promise((resolve) => setTimeout(resolve, 1000)),
@@ -105,7 +124,8 @@ function ProvideLoanPage() {
   return (
     <div className="flex justify-center">
       <div className="w-[640px]">
-        <BackButton label="ঋণ তালিকায় ফিরে যান" />
+
+        <BackButton />
 
         <div className="mb-6">
           <h1 className="text-[23px] mb-1">ঋণ প্রদান</h1>
@@ -197,7 +217,7 @@ function ProvideLoanPage() {
                 name="total_installment"
                 value={form.total_installment}
                 onChange={handleChange}
-                placeholder="২৬"
+                placeholder="২৫"
                 className={`w-full text-[13.5px] px-3.5 py-2.5 rounded-[3px] border text-right ${
                   errors.total_installment ? "border-[var(--danger)] bg-[var(--danger-bg)]" : "border-[var(--border)] bg-[var(--bg)]"
                 }`}
@@ -215,6 +235,32 @@ function ProvideLoanPage() {
               <div className="text-[11.5px] text-[var(--text)] mt-1.5">পরিমাণ, সুদ ও মেয়াদ থেকে হিসাব করা হয়েছে</div>
             </div>
           </div>
+
+          <div className="text-right mb-[18px]">
+            <label className="block text-xs text-[var(--text)] mb-1.5">সঞ্চয় (৳)</label>
+            <input
+              type="text"
+              name="savings"
+              value={form.savings}
+              onChange={handleChange}
+              placeholder="0"
+              className="w-full text-[13.5px] px-3.5 py-2.5 rounded-[3px] border border-[var(--border)] bg-[var(--bg)] text-right"
+            />
+         </div>
+
+         <div className="text-right mb-[18px]">
+            <label className="block text-xs text-[var(--text)] mb-1.5">
+              কিস্তির ধরন <span className="text-[var(--danger)]">*</span>
+            </label>
+            <select
+              name="frequency"
+              value={form.frequency}
+              onChange={handleChange}
+              className="w-full text-[13.5px] px-3.5 py-2.5 rounded-[3px] border border-[var(--border)] bg-[var(--bg)] text-right"
+            >
+              <option value="WEEKLY">সাপ্তাহিক</option>
+            </select>
+        </div>
 
           <div className="flex gap-2.5 mt-2">
             <button

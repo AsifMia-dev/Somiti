@@ -6,13 +6,10 @@ function BorrowerRow({ borrower, onView, onEdit, onDelete }) {
   return (
     <tr className="hover:bg-[#F5F1E5]">
       <td className="py-3.5 px-2 text-right border-b border-[var(--border)]">
-        <div className="flex items-center gap-2.5 flex-row-reverse justify-end">
-          <div className="w-8 h-8 rounded-full bg-[var(--success-bg)] text-[var(--primary-dark)] font-serif text-xs font-semibold flex items-center justify-center flex-shrink-0">
-            {getInitials(borrower.full_name)}
-          </div>
-          <div>
+        <div className="flex items-center gap-3 flex-row-reverse justify-end">
             <div className="font-medium text-[13.5px]">{borrower.full_name}</div>
-            <div className="text-xs text-[var(--text)]">খাতা #{String(borrower.id).padStart(4, "0")}</div>
+            <div className="w-8 h-8 rounded-full bg-[var(--success-bg)] text-[var(--primary-dark)] font-serif text-xs font-semibold flex items-center justify-center flex-shrink-0">
+              {getInitials(borrower.full_name)}
           </div>
         </div>
       </td>

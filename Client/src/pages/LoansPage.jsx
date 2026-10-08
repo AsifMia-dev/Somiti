@@ -58,8 +58,6 @@ function LoansPage() {
       </div>
 
       <LoansTable loans={loans} onView={handleView} onEdit={handleEdit} />
-
-      {/* ProvideLoanModal goes here once built */}
     </>
   );
 }
