@@ -24,15 +24,14 @@ async function create(req, res) {
 
 async function findSomitiByManagerIdController(req, res) {
   try {
-    const managerId = req.params.managerId;
-    if (!managerId || Number.isNaN(Number(managerId))) {
-      const error = new Error('Manager id is required and must be a number');
+    const managerId = typeof req.params.managerId === 'string' ? req.params.managerId.trim() : '';
+    if (!managerId) {
+      const error = new Error('Manager id is required');
       error.statusCode = 400;
       throw error;
     }
 
     const somiti = await findSomitiByManagerId(managerId);
-    console.log(somiti);
 
     if (!somiti) {
       return res.status(404).json({ error: 'Somiti not found for this manager' });

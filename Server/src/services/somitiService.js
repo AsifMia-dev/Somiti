@@ -11,7 +11,7 @@ function toNumber(value, fieldName) {
 }
 
 async function findSomitiByManagerId(owner_manager_id){
-  return await prisma.somiti.findUnique({ where: { owner_manager_id: Number(owner_manager_id) } });
+  return await prisma.somiti.findUnique({ where: { owner_manager_id: owner_manager_id } });
 }
 
 async function createSomiti({ managerId, name, collection_day, monthly_collection_date, handValue, loan_balance }) {
@@ -32,7 +32,7 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
   const loanBalance = toNumber(loan_balance, 'loan_balance');
 
   // verify manager exists
-  const manager = await prisma.manager.findUnique({ where: { id: Number(managerId) } });
+  const manager = await prisma.manager.findUnique({ where: { id: managerId } });
   if (!manager) {
     const error = new Error('Manager not found');
     error.statusCode = 404;
@@ -56,7 +56,7 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
 
   const somitiData = {
     name: trimmedName,
-    owner_manager_id: Number(managerId),
+    owner_manager_id: managerId,
     finance: {
       create: {
         cash_balance: cashBalance,

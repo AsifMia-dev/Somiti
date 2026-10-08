@@ -1,6 +1,7 @@
 const loanService = require('../services/loanService');
 
 async function createLoan(req, res) {
+  const { somitiId } = req.params;
   try {
     const {
       loan_type,
@@ -14,7 +15,8 @@ async function createLoan(req, res) {
     } = req.body;
 
     const result = await loanService.createNewLoan({
-     loan_type,
+      somitiId,
+      loan_type,
       loan_amount,
       interest_rate,
       total_installment,
@@ -33,11 +35,9 @@ async function createLoan(req, res) {
 }
 
 async function getLoans(req, res) {
-  console.log("Inside getLoans controller");
-  const {somitiId} = req.params;
+  const { somitiId } = req.params;
   try {
-    const result = await loanService.getAllLoans(Number(somitiId));
-    console.log("Loans fetched successfully:", result);
+    const result = await loanService.getAllLoans(somitiId);
     return res.status(200).json(result);
   } catch (err) {
     const statusCode = err.statusCode || 500;

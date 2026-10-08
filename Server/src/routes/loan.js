@@ -11,7 +11,7 @@ const {
   deleteLoan,
 } = require('../controllers/loanController');
 
-router.post('/', authMiddleware, createLoan);
+router.post('/:somitiId', authMiddleware, createLoan);
 router.get('/:somitiId',authMiddleware, getLoans);
 router.get('/:id', authMiddleware, getLoanById);
 router.get('/:borrowerId', authMiddleware, getLoansByBorrower);

@@ -1,5 +1,5 @@
 const prisma = require('../lib/prisma');
-const installmentService = require('./installmentService')
+const installmentService = require('./installmentService');
 
 function toNumber(value, fieldName) {
   const number = Number(value);
@@ -13,9 +13,20 @@ function toNumber(value, fieldName) {
   return number;
 }
 
+function normalizeUuid(value, fieldName) {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    const error = new Error(`${fieldName} is required`);
+    error.statusCode = 400;
+    throw error;
+  }
+  return normalized;
+}
+
 async function ensureBorrowerExists(borrowerId) {
+  const normalizedBorrowerId = normalizeUuid(borrowerId, 'borrowerId');
   const borrower = await prisma.borrower.findUnique({
-    where: { id: Number(borrowerId) },
+    where: { id: normalizedBorrowerId },
     include: { somiti: true },
   });
 
@@ -28,33 +39,33 @@ async function ensureBorrowerExists(borrowerId) {
   return borrower;
 }
 
-// Create New Loan
 async function createNewLoan(payload) {
   const {
+    somitiId,
     loan_type,
     loan_amount,
     interest_rate,
     total_installment,
     savings,
     frequency,
-    borrower_id
+    borrower_id,
   } = payload || {};
-  if(loan_type !== "NEW") return{ message : "Loan must me new"};
+
+  if (loan_type !== 'NEW') return { message: 'Loan must be new' };
 
   if (!loan_type || !loan_amount || !borrower_id || !interest_rate || !total_installment) {
-    const err = new Error("Missing required loan fields");
+    const err = new Error('Missing required loan fields');
     err.statusCode = 400;
     throw err;
   }
 
-  const borrower = await ensureBorrowerExists(borrower_id);
+  const normalizedBorrowerId = normalizeUuid(borrower_id, 'borrower_id');
+  const borrower = await ensureBorrowerExists(normalizedBorrowerId);
 
-  // Prevent creating a new loan if borrower already has an ACTIVE loan of type NEW
   const existingActiveNew = await prisma.loan.findFirst({
     where: {
-      borrower_id: Number(borrower_id),
+      borrower_id: normalizedBorrowerId,
       loan_type: 'NEW',
-      // loan status is stored on LoanAccount.status
       account: { status: 'ACTIVE' },
     },
     include: { account: true },
@@ -82,7 +93,7 @@ async function createNewLoan(payload) {
     interest_rate: interestRate,
     total_installment: totalInst,
     frequency: frequency || 'WEEKLY',
-    borrower_id: Number(borrower_id),
+    borrower_id: normalizedBorrowerId,
   };
 
   const LoanAccountData = {
@@ -95,10 +106,35 @@ async function createNewLoan(payload) {
   };
 
   return await prisma.$transaction(async (tx) => {
+    const somitiFinance = await tx.somitiFinance.findUnique({
+      where: { somiti_id: borrower.somiti.id },
+    });
+
+    if (!somitiFinance) {
+      const err = new Error('Somiti finance not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const availableCash = Number(somitiFinance.cash_balance || 0);
+    if (loan_amt > availableCash) {
+      const err = new Error('সমিতির নগদ ব্যালেন্স পর্যাপ্ত নয়');
+      err.statusCode = 400;
+      throw err;
+    }
+
     const loan = await tx.loan.create({ data: loanData });
 
-    const loanAcc = await tx.loanAccount.create({
+    await tx.loanAccount.create({
       data: { ...LoanAccountData, loan_id: loan.id },
+    });
+
+    await tx.somitiFinance.update({
+      where: { somiti_id: borrower.somiti.id },
+      data: {
+        cash_balance: { decrement: loan_amt },
+        loan_balance: { increment: loan_amt },
+      },
     });
 
     await installmentService.generateInstallments(
@@ -115,33 +151,54 @@ async function createNewLoan(payload) {
 }
 
 async function getAllLoans(somitiId) {
-  const loans = await prisma.loan.findMany({
-    where: {
-      borrower: {
-        somiti_id: somitiId
-      }
-    }
-  });
-  return loans;
+  const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
+  
+  const loanData = await prisma.loanAccount.findMany({
+  where: { loan: { borrower: { somiti_id: normalizedSomitiId } } },
+  select: {
+        collected_amount: true,
+        due_amount: true,
+        fine: true,
+        savings: true,
+        status: true,
+        loan: {
+          select: {
+            id: true,
+            loan_amount: true,
+            interest_rate: true,
+            total_installment: true,
+            completed_installment: true,
+            borrower: {
+              select: {
+                full_name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log(loanData)
+
+    return loanData;
 }
 
 async function getLoansByBorrower(borrowerId) {
+  const value = typeof borrowerId === 'object' && borrowerId !== null ? borrowerId.borrowerId ?? borrowerId.id : borrowerId;
+  const normalizedBorrowerId = normalizeUuid(value, 'borrowerId');
+
   return await prisma.loan.findMany({
-    where: { borrower_id: Number(borrowerId) },
+    where: { borrower_id: normalizedBorrowerId },
     include: { borrower: true },
     orderBy: { created_at: 'desc' },
   });
 }
 
 async function getLoanById(id) {
-  if (!id || Number.isNaN(Number(id))) {
-    const error = new Error('Invalid loan id');
-    error.statusCode = 400;
-    throw error;
-  }
+  const normalizedId = normalizeUuid(id, 'loanId');
 
   const loan = await prisma.loan.findUnique({
-    where: { id: Number(id) },
+    where: { id: normalizedId },
     include: { borrower: true },
   });
 
@@ -155,13 +212,9 @@ async function getLoanById(id) {
 }
 
 async function updateLoan(id, payload = {}) {
-  if (!id || Number.isNaN(Number(id))) {
-    const error = new Error('Invalid loan id');
-    error.statusCode = 400;
-    throw error;
-  }
+  const normalizedId = normalizeUuid(id, 'loanId');
 
-  const loan = await prisma.loan.findUnique({ where: { id: Number(id) } });
+  const loan = await prisma.loan.findUnique({ where: { id: normalizedId } });
   if (!loan) {
     const error = new Error('Loan not found');
     error.statusCode = 404;
@@ -191,7 +244,7 @@ async function updateLoan(id, payload = {}) {
   }
 
   const updatedLoan = await prisma.loan.update({
-    where: { id: Number(id) },
+    where: { id: normalizedId },
     data: updates,
     include: { borrower: true },
   });
@@ -200,20 +253,16 @@ async function updateLoan(id, payload = {}) {
 }
 
 async function deleteLoan(id) {
-  if (!id || Number.isNaN(Number(id))) {
-    const error = new Error('Invalid loan id');
-    error.statusCode = 400;
-    throw error;
-  }
+  const normalizedId = normalizeUuid(id, 'loanId');
 
-  const loan = await prisma.loan.findUnique({ where: { id: Number(id) } });
+  const loan = await prisma.loan.findUnique({ where: { id: normalizedId } });
   if (!loan) {
     const error = new Error('Loan not found');
     error.statusCode = 404;
     throw error;
   }
 
-  await prisma.loan.delete({ where: { id: Number(id) } });
+  await prisma.loan.delete({ where: { id: normalizedId } });
 
   return { message: 'Loan deleted successfully' };
 }

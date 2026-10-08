@@ -2,8 +2,8 @@ const dashboardService = require('../services/dashboardService');
 
 async function balanceSummary(req, res) {
   try {
-    const somitiId = Number(req.params.somitiId);
-    if (!somitiId || Number.isNaN(somitiId)) {
+    const somitiId = typeof req.params.somitiId === 'string' ? req.params.somitiId.trim() : '';
+    if (!somitiId) {
       const error = new Error('Invalid somiti id');
       error.statusCode = 400;
       throw error;

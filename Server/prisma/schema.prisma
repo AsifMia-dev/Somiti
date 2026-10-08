@@ -7,7 +7,7 @@ datasource db {
 }
 
 model Manager {
-  id            Int      @id @default(autoincrement())
+  id            String @id @default(uuid()) @db.Uuid
   name     String
   email         String   @unique
   phone         String?
@@ -27,12 +27,12 @@ enum Weekday {
 }
 
 model Somiti {
-  id                    Int             @id @default(autoincrement())
+  id                    String @id @default(uuid()) @db.Uuid
   name                  String          @unique
   created_at            DateTime        @default(now())
   collection_day        Weekday         @default(THURSDAY)
   monthly_collection_date Int           @default(5) 
-  owner_manager_id      Int             @unique
+  owner_manager_id      String @db.Uuid           @unique
   owner_manager         Manager         @relation(fields: [owner_manager_id], references: [id], onDelete: Cascade)
   borrowers             Borrower[]
   finance               SomitiFinance?
@@ -41,29 +41,27 @@ model Somiti {
 }
 
 model Borrower {
-  id              Int           @id @default(autoincrement())
+  id              String @id @default(uuid()) @db.Uuid
   full_name       String
   phone           String?
-  nid_number      String        @unique
+  nid_number      String       
   father_name     String?
   village_address String?
   photo_url       String?
   created_at      DateTime      @default(now())
-  somiti_id       Int
+  somiti_id       String @db.Uuid
   somiti          Somiti        @relation(fields: [somiti_id], references: [id], onDelete: Cascade)
   loans           Loan[]
   installments    Installment[]
 
   @@index([somiti_id])
+  @@unique([nid_number, somiti_id])
 }
 
 enum LoanStatus {
   ACTIVE
   PAID
-<<<<<<< HEAD
   COMPLETED
-=======
->>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
 }
 
 enum Frequency {
@@ -76,19 +74,15 @@ enum LoanType {
 }
 
 model Loan {
-  id             Int        @id @default(autoincrement())
+  id             String @id @default(uuid()) @db.Uuid
   loan_type      LoanType
   loan_amount    Decimal    @db.Decimal(12, 2)
   interest_rate  Decimal    @db.Decimal(5, 2)
-<<<<<<< HEAD
   total_installment  Int
   completed_installment Int @default(0)                         
-=======
-  total_installment  Int                         
->>>>>>> f1efd2809565f4182c0fff0fd5436fb67720af76
   frequency      Frequency  @default(WEEKLY)
   created_at     DateTime   @default(now())
-  borrower_id    Int
+  borrower_id    String @db.Uuid
   borrower       Borrower   @relation(fields: [borrower_id], references: [id], onDelete: Cascade)
   installments   Installment[]
   account        LoanAccount?
@@ -97,14 +91,14 @@ model Loan {
 }
 
 model LoanAccount {
-  id               Int      @id @default(autoincrement())
+  id               String @id @default(uuid()) @db.Uuid
   installment_amount Decimal @db.Decimal(12, 2)   // shaptahik kisti er poriman
   collected_amount Decimal  @db.Decimal(12, 2) @default(0)
   savings        Decimal    @db.Decimal(12, 2) @default(0)
   due_amount       Decimal  @db.Decimal(12, 2)
   fine             Decimal  @db.Decimal(12, 2) @default(0)
   status           LoanStatus @default(ACTIVE)
-  loan_id          Int      @unique
+  loan_id          String @unique @db.Uuid
   loan             Loan     @relation(fields: [loan_id], references: [id], onDelete: Cascade)
 }
 
@@ -115,16 +109,16 @@ enum InstallmentStatus {
 }
 
 model Installment {
-  id                 Int               @id @default(autoincrement())
+  id                 String @id @default(uuid()) @db.Uuid
   installNo          Int
-  due_date           DateTime
+  due_date           DateTime @db.Date
   installment_amount Decimal           @db.Decimal(12, 2)
   status             InstallmentStatus @default(PENDING)
   fine_amount        Decimal           @db.Decimal(12, 2) @default(0)
   collected_at       DateTime?
-  borrower_id        Int
+  borrower_id        String @db.Uuid
   borrower           Borrower          @relation(fields: [borrower_id], references: [id], onDelete: Cascade)
-  loan_id            Int
+  loan_id            String @db.Uuid
   loan               Loan              @relation(fields: [loan_id], references: [id], onDelete: Cascade)
 
   @@index([borrower_id])
@@ -132,12 +126,12 @@ model Installment {
 }
 
 model SomitiFinance {
-  id                      Int      @id @default(autoincrement())
+  id                      String @id @default(uuid()) @db.Uuid
   cash_balance            Decimal  @db.Decimal(12, 2) @default(0)
   total_interest_earned   Decimal  @db.Decimal(12, 2) @default(0)
   loan_balance            Decimal  @db.Decimal(12, 2) @default(0)
   total_fines_collected   Decimal  @default(0)
   total_fines_outstanding Decimal  @default(0)
-  somiti_id               Int      @unique
+  somiti_id               String @unique @db.Uuid
   somiti                  Somiti   @relation(fields: [somiti_id], references: [id], onDelete: Cascade)
 }

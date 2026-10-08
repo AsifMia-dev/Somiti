@@ -80,13 +80,24 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
 
 
 
+function normalizeUuid(value, fieldName) {
+  const normalized = typeof value === 'string' ? value.trim() : '';
+  if (!normalized) {
+    const error = new Error(`${fieldName} is required`);
+    error.statusCode = 400;
+    throw error;
+  }
+  return normalized;
+}
+
 async function fetchInstallmentsDue(somitiId, collectionDate, lastCollectionDate) {
+  const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
   const rows = await prisma.installment.findMany({
     where: {
-      borrower: { somiti_id: Number(somitiId) },
+      borrower: { somiti_id: normalizedSomitiId },
       OR: [
-        { due_date: { gt: lastCollectionDate, lte: collectionDate } },   // this week: pending or paid
-        { due_date: { lte: lastCollectionDate }, status: 'PENDING' },    // overdue: older and unpaid
+        { due_date: { gt: lastCollectionDate, lte: collectionDate } },
+        { due_date: { lte: lastCollectionDate }, status: 'OVERDUE' },
       ],
     },
     orderBy: { due_date: 'asc' },
@@ -150,9 +161,11 @@ const getCollectionDate = (collectionDay, monthlyCollectionDate, frequency) => {
 };
 
 
-async function getCollectionSheet({somitiId}) {
-   const somiti = await prisma.somiti.findUnique({
-    where: { id: Number(somitiId) },
+async function getCollectionSheet({ somitiId }) {
+  const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
+
+  const somiti = await prisma.somiti.findUnique({
+    where: { id: normalizedSomitiId },
   });
 
   const collectionInfo = getCollectionDate(somiti.collection_day, somiti.monthly_collection_date, 'WEEKLY');
@@ -160,16 +173,18 @@ async function getCollectionSheet({somitiId}) {
   const lastCollectionDate = new Date(collectionInfo.collectionDate);
   lastCollectionDate.setDate(lastCollectionDate.getDate() - 7);
 
-  const installments = await fetchInstallmentsDue(somitiId, collectionInfo.collectionDate, lastCollectionDate);
+  const installments = await fetchInstallmentsDue(normalizedSomitiId, collectionInfo.collectionDate, lastCollectionDate);
 
-
-  return {collectionInfo, installments};
+  return { collectionInfo, installments };
 }
 
 async function collect({ somitiId, installmentId }) {
+  const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
+  const normalizedInstallmentId = normalizeUuid(installmentId, 'installmentId');
+
   return prisma.$transaction(async (tx) => {
     const inst = await tx.installment.findFirst({
-      where: { id: installmentId, borrower: { somiti_id: somitiId } },
+      where: { id: normalizedInstallmentId, borrower: { somiti_id: normalizedSomitiId } },
       select: { id: true, loan_id: true, installment_amount: true, fine_amount: true },
     });
     if (!inst) {
@@ -210,7 +225,7 @@ async function collect({ somitiId, installmentId }) {
     const principalPart = amount - interestPart;
 
     await tx.somitiFinance.update({
-      where: { somiti_id: somitiId },
+      where: { somiti_id: normalizedSomitiId },
       data: {
         cash_balance: { increment: totalCollected },
         loan_balance: { decrement: principalPart },

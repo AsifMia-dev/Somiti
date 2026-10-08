@@ -16,11 +16,13 @@ async function getCollectionSheet(req, res) {
 
 const collectInstallment = async (req, res, next) => {
   try {
-    const somitiId = Number(req.params.somitiId);
-    const installmentId = Number(req.params.installmentId);
-    if (!Number.isInteger(somitiId) || !Number.isInteger(installmentId)) {
+    const somitiId = typeof req.params.somitiId === 'string' ? req.params.somitiId.trim() : '';
+    const installmentId = typeof req.params.installmentId === 'string' ? req.params.installmentId.trim() : '';
+
+    if (!somitiId || !installmentId) {
       return res.status(400).json({ error: 'Invalid id' });
     }
+
     const data = await installmentService.collect({
       somitiId,
       installmentId,
