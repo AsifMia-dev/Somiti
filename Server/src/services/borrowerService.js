@@ -72,68 +72,8 @@ async function getBorrowers(somitiId) {
   return { data: borrowers };
 }
 
-async function getBorrowerById(id) {
-  const normalizedId = normalizeUuid(id, 'borrowerId');
-
-  const borrower = await prisma.borrower.findUnique({ where: { id: normalizedId } });
-  if (!borrower) {
-    const err = new Error('Borrower not found');
-    err.statusCode = 404;
-    throw err;
-  }
-
-  return { data: borrower };
-}
-
-async function updateBorrower(id, payload) {
-  const normalizedId = normalizeUuid(id, 'borrowerId');
-  const updates = {};
-
-  if (payload.nid) {
-    const nidNumber = normalizeString(payload.nid);
-    const existingNid = await prisma.borrower.findUnique({ where: { nid_number: nidNumber } });
-    if (existingNid && existingNid.id !== normalizedId) {
-      const err = new Error('NID already in use by another borrower');
-      err.statusCode = 409;
-      throw err;
-    }
-    updates.nid_number = nidNumber;
-  }
-
-  if (payload.phone !== undefined) {
-    const phoneVal = payload.phone || null;
-    if (phoneVal) {
-      const existingPhone = await prisma.borrower.findFirst({ where: { phone: phoneVal } });
-      if (existingPhone && existingPhone.id !== normalizedId) {
-        const err = new Error('Phone number already in use by another borrower');
-        err.statusCode = 409;
-        throw err;
-      }
-    }
-    updates.phone = phoneVal;
-  }
-
-  if (payload.fullName) updates.full_name = normalizeString(payload.fullName);
-  if (payload.fatherName !== undefined) updates.father_name = normalizeString(payload.fatherName);
-  if (payload.address !== undefined) updates.village_address = normalizeString(payload.address);
-
-  const borrower = await prisma.borrower.update({ where: { id: normalizedId }, data: updates });
-
-  return { message: 'Borrower updated', data: borrower };
-}
-
-async function deleteBorrower(id) {
-  const normalizedId = normalizeUuid(id, 'borrowerId');
-
-  await prisma.borrower.delete({ where: { id: normalizedId } });
-
-  return { message: 'Borrower deleted' };
-}
 
 module.exports = {
   createBorrower,
   getBorrowers,
-  getBorrowerById,
-  updateBorrower,
-  deleteBorrower,
 };

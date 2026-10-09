@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const { createBorrower, getBorrowers, updateBorrower, deleteBorrower } = require('../controllers/borrowerController');
+const { createBorrower, getBorrowers } = require('../controllers/borrowerController');
 
 router.post('/:somitiId', authMiddleware, createBorrower);
 router.get('/:somitiId', authMiddleware, getBorrowers);
-router.put('/:id', authMiddleware, updateBorrower);
-router.delete('/:id', authMiddleware, deleteBorrower);
 
 module.exports = router;

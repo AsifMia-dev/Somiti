@@ -28,39 +28,9 @@ async function getBorrowers(req, res) {
   }
 }
 
-async function updateBorrower(req, res) {
-  try {
-    const { id } = req.params;
-    const payload = req.body || {};
-
-    const result = await borrowerService.updateBorrower(id, payload);
-
-    return res.status(200).json(result);
-  } catch (err) {
-    const status = err.statusCode || 500;
-    const message = err.message || 'Failed to update borrower';
-    return res.status(status).json({ error: message });
-  }
-}
-
-async function deleteBorrower(req, res) {
-  try {
-    const { id } = req.params;
-
-    const result = await borrowerService.deleteBorrower(id);
-
-    return res.status(200).json(result);
-  } catch (err) {
-    const status = err.statusCode || 500;
-    const message = err.message || 'Failed to delete borrower';
-    return res.status(status).json({ error: message });
-  }
-}
 
 module.exports = {
   createBorrower,
   getBorrowers,
-  updateBorrower,
-  deleteBorrower,
 };
 
