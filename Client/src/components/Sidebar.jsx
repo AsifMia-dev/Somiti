@@ -38,26 +38,6 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    to: "/installments",
-    label: "কিস্তি",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <path d="M16 2v4M8 2v4M3 10h18" />
-      </svg>
-    ),
-  },
-  {
-    to: "/reports",
-    label: "রিপোর্ট",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-        <path d="M3 3v18h18" />
-        <path d="M18 17V9M13 17V5M8 17v-4" />
-      </svg>
-    ),
-  },
 ];
 
 

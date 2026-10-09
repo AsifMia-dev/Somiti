@@ -28,13 +28,6 @@ function LoansPage() {
       .finally(() => setLoading(false));
   }, [somiti?.id]);
 
-  const handleView = (loan) => {
-    navigate(`/loans/${loan.id}`);
-  };
-
-  const handleEdit = (loan) => {
-    navigate(`/loans/${loan.id}/edit`);
-  };
 
   if(loading || loans === null) {
     return <div>Loading...</div>;
@@ -57,7 +50,7 @@ function LoansPage() {
         </button>
       </div>
 
-      <LoansTable loans={loans} onView={handleView} onEdit={handleEdit} />
+      <LoansTable loans={loans}/>
     </>
   );
 }

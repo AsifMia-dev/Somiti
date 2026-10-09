@@ -24,36 +24,6 @@ function BorrowersPage() {
       .catch((err) => console.error(err));
   }, [somiti?.id]);
 
-  const handleView = (borrower) => {
-    navigate(`/borrowers/${borrower.id}`);
-  };
-
-  const handleEdit = (borrower) => {
-    navigate(`/borrowers/${borrower.id}/edit`);
-  };
-
-  const handleDelete = async (borrower) => {
-    if (!window.confirm(`${borrower.full_name} কে মুছে ফেলতে চান?`)) return;
-
-    try {
-      const res = await fetch(`${baseUrl}/borrowers/${somiti.id}/${borrower.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        toast.success("ঋণগ্রহীতা মুছে ফেলা হয়েছে");
-        setBorrowers((prev) => prev.filter((b) => b.id !== borrower.id));
-      } else {
-        toast.error(data.error || "মুছে ফেলা যায়নি");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("কিছু ভুল হয়েছে");
-    }
-  };
-
   if (!borrowers) return <div>লোড হচ্ছে...</div>;
 
   return (
@@ -73,9 +43,6 @@ function BorrowersPage() {
 
       <BorrowersTable
         borrowers={borrowers}
-        onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
     </>
   );

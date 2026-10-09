@@ -1,7 +1,7 @@
 import { useState } from "react";
 import BorrowerRow from "./BorrowerRow";
 
-function BorrowersTable({ borrowers, onView, onEdit, onDelete }) {
+function BorrowersTable({ borrowers }) {
   const [search, setSearch] = useState("");
 
   const filtered = borrowers.filter((b) => {
@@ -49,9 +49,6 @@ function BorrowersTable({ borrowers, onView, onEdit, onDelete }) {
               <BorrowerRow
                 key={borrower.id}
                 borrower={borrower}
-                onView={onView}
-                onEdit={onEdit}
-                onDelete={onDelete}
               />
             ))}
           </tbody>

@@ -144,10 +144,6 @@ function AddBorrowerPage() {
               </div>
             </div>
 
-            <div className="text-xs font-semibold text-[var(--accent-deep)] mt-5 mb-3 pt-4.5 border-t border-[var(--border)]">
-              অতিরিক্ত তথ্য <span className="text-[10.5px] text-[var(--text)] border border-[var(--border)] rounded-full px-1.5 py-0.5 ml-1.5">ঐচ্ছিক</span>
-            </div>
-
             <div className="grid grid-cols-2 gap-4">
               <div className="text-right mb-4">
                 <label className="block text-xs text-[var(--text)] mb-1.5">পিতার নাম</label>

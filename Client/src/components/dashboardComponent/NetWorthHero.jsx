@@ -16,7 +16,7 @@ function NetWorthHero({ finance }) {
         <p className="text-[13px] text-[var(--text)] mb-1.5">সমিতির আর্থিক অবস্থান</p>
         <h2 className="text-[19px] mb-2">মোট নিট মূল্য ৳{netWorth.toLocaleString("bn-BD")}</h2>
         <p className="text-[13.5px] text-[var(--text)] max-w-[48ch] leading-relaxed">
-          নগদ ব্যালেন্স এবং বিতরণকৃত ঋণের সমষ্টি থেকে এই মূল্য নির্ধারিত হয়েছে।
+          নগদ তহবিল এবং বিতরণকৃত ঋণের সমষ্টি থেকে এই মূল্য নির্ধারিত হয়েছে।
         </p>
         <div className="text-[12.5px] text-[var(--text)] mt-2.5">
           নগদ <b className="text-[var(--text-h)] font-mono font-medium">৳{Number(finance.cash_balance).toLocaleString("bn-BD")}</b>

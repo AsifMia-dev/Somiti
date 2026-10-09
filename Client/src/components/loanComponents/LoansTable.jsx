@@ -1,7 +1,7 @@
 import { useState } from "react";
 import LoanRow from "./LoanRow";
 
-function LoansTable({ loans, onView, onEdit }) {
+function LoansTable({ loans }) {
   const [search, setSearch] = useState("");
 
   const filtered = loans.filter((loan) => {
@@ -63,7 +63,7 @@ function LoansTable({ loans, onView, onEdit }) {
             </thead>
             <tbody>
               {filtered.map((loan) => (
-                <LoanRow key={loan.id} loan={loan} onView={onView} onEdit={onEdit} />
+                <LoanRow key={loan.id} loan={loan}/>
               ))}
             </tbody>
           </table>

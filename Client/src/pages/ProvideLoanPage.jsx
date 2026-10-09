@@ -48,9 +48,12 @@ function ProvideLoanPage() {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
       .then((res) => res.json())
-      .then((data) => setBorrowers(data.data))
+      .then((data) => {
+        console.log(data);
+        setBorrowers(data.data)
+      })
       .catch((err) => console.error(err));
-  }, [somiti?.id]);
+  },[]);
 
   useEffect(() => {
     const amount = parseFloat(form.loan_amount) || 0;

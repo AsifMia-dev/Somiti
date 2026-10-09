@@ -100,7 +100,7 @@ function DashboardPage() {
       </div>
 
       <NetWorthHero finance={summary} />
-      <StatsGrid finance={summary} todayCollection={summary.todayCollection} overdue={summary.overdue} />
+      <StatsGrid finance={summary} />
       
      <div className={overdue.length > 0 ? "grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5" : ""}>
         <TodaysLedgerTable
