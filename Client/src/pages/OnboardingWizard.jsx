@@ -14,7 +14,7 @@ import { baseUrl } from "../helper/baseUrlHelper";
 import { AuthContext } from "../context/AuthContext";
 import { SomitiContext } from "../context/SomitiContext";
 
-const totalSteps = 5;
+const totalSteps = 4;
 
 function OnboardingWizard() {
   console.log("OnboardingWizard");
@@ -29,7 +29,6 @@ function OnboardingWizard() {
     collection_day:"THURSDAY",
     monthly_collection_date:"5",
     handValue: 0,
-    loan_balance: 0,
   });
 
   const [loading, setLoading] = useState(false);
@@ -107,19 +106,12 @@ function OnboardingWizard() {
         {current === 2 && (
           <StepMoneyField
             stepNumber={3} totalSteps={6}
-            title="নগদ ব্যালেন্স" subtitle="সমিতির হাতে বর্তমানে থাকা নগদ অর্থের পরিমাণ"
+            title="নগদ তহবিল" subtitle="সমিতির হাতে বর্তমানে থাকা নগদ অর্থের পরিমাণ"
             fieldName="handValue" formData={formData} handleChange={handleChange}
           />
         )}
-        {current === 3 && (
-          <StepMoneyField
-            stepNumber={4} totalSteps={6}
-            title="ঋণ ব্যালেন্স" subtitle="বর্তমানে বাইরে বিতরণ করা মোট ঋণের পরিমাণ"
-            fieldName="loan_balance" formData={formData} handleChange={handleChange}
-          />
-        )}
-        {current === 4 && <StepCollectionSchedule formData={formData} handleChange={handleChange} />}
-        {current === 5 && <StepReview formData={formData} />}
+        {current === 3 && <StepCollectionSchedule formData={formData} handleChange={handleChange} />}
+        {current === 4 && <StepReview formData={formData} />}
 
         <WizardNav
           current={current}
