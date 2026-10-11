@@ -14,7 +14,7 @@ async function findSomitiByManagerId(owner_manager_id){
   return await prisma.somiti.findUnique({ where: { owner_manager_id: owner_manager_id } });
 }
 
-async function createSomiti({ managerId, name, collection_day, monthly_collection_date, handValue, loan_balance }) {
+async function createSomiti({ managerId, name, collection_day, monthly_collection_date, handValue}) {
   if (!managerId) {
     const error = new Error('Manager is required');
     error.statusCode = 400;
@@ -29,7 +29,7 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
   }
 
   const cashBalance = toNumber(handValue, 'handValue');
-  const loanBalance = toNumber(loan_balance, 'loan_balance');
+
 
   // verify manager exists
   const manager = await prisma.manager.findUnique({ where: { id: managerId } });
@@ -60,7 +60,6 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
     finance: {
       create: {
         cash_balance: cashBalance,
-        loan_balance: loanBalance,
       },
     },
   };
@@ -80,7 +79,7 @@ async function createSomiti({ managerId, name, collection_day, monthly_collectio
     },
   });
 
-  return { message: 'Somiti created successfully', data: somiti };
+  return { message: 'সমিতি নিবন্ধন সম্পন্ন হয়েছে', data: somiti };
 }
 
 
