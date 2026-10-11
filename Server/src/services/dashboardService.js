@@ -14,7 +14,6 @@ async function getBalanceSummary(somitiId) {
     err.statusCode = 404;
     throw err;
   }
-  console.log('Finance data retrieved:', finance); // Debugging log
   return {
     ...finance,
   };
