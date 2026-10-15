@@ -111,12 +111,13 @@ async function fetchInstallmentsDue(somitiId, collectionDate, lastCollectionDate
       fine_amount: true,
       borrower_id: true,
       borrower: { select: { full_name: true } },
+      savings:true
     },
   });
-
   return {
     thisWeek: rows.filter((r) => r.due_date > lastCollectionDate),
     overdue: rows.filter((r) => r.due_date <= lastCollectionDate),
+
   };
 }
 
