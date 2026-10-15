@@ -24,6 +24,7 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [overdue, setOverdue] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
+  const [savingValue, setSavingValue] = useState({});
 
   const loadDashboard = useCallback(async () => {
     if (!somiti?.id || !accessToken) return;
@@ -64,15 +65,28 @@ function DashboardPage() {
     loadDashboard();
   }, [loadDashboard]);
 
+
+  const handleSavingChange = (installmentId, value) => {
+    setSavingValue((prev) => ({ ...prev, [installmentId]: value }));
+  };
+
   const handleCollect = async (installmentId) => {
     setCollectingId(installmentId);
     try {
+      const savings = Number(savingValue[installmentId] ?? 0);
+
       const res = await fetch(`${baseUrl}/installment-sheet/${somiti.id}/${installmentId}/collect`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ savings }),
       });
       if (!res.ok) throw new Error("আদায় করা যায়নি");
-      const result = await res.json();
+      await res.json();
+
+      setSavingValue((prev) => ({ ...prev, [installmentId]: "" }));
 
       await loadDashboard();
       toast.success("কিস্তি সফলভাবে আদায় করা হয়েছে");
@@ -107,6 +121,8 @@ function DashboardPage() {
           installments={installments}
           onCollect={handleCollect}
           collectingId={collectingId}
+          savingValues={savingValue}
+          onSavingChange={handleSavingChange}
         />
         {overdue.length > 0 && (
           <OverdueTable
