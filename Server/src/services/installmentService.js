@@ -178,25 +178,38 @@ async function getCollectionSheet({ somitiId }) {
   return { collectionInfo, installments };
 }
 
-async function collect({ somitiId, installmentId }) {
+async function collect({ somitiId, installmentId, savings }) {
   const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
   const normalizedInstallmentId = normalizeUuid(installmentId, 'installmentId');
+  const numericSavings = Number(savings ?? 0);
+
+  if (Number.isNaN(numericSavings) || numericSavings < 0) {
+    const error = new Error('সঞ্চয়ের পরিমাণ অবশ্যই 0 বা তার চেয়ে বেশি হতে হবে।');
+    error.statusCode = 400;
+    throw error;
+  }
 
   return prisma.$transaction(async (tx) => {
     const inst = await tx.installment.findFirst({
       where: { id: normalizedInstallmentId, borrower: { somiti_id: normalizedSomitiId } },
-      select: { id: true, loan_id: true, installment_amount: true, fine_amount: true },
+      select: { id: true, loan_id: true, installment_amount: true, fine_amount: true, savings: true },
     });
+
     if (!inst) {
-      const error = new Error('কিস্তি পাওয়া যায়নি');
+      const error = new Error('Not found');
       error.statusCode = 404;
       throw error;
     }
 
     const claimed = await tx.installment.updateMany({
       where: { id: inst.id, status: { in: ['PENDING', 'OVERDUE'] } },
-      data: { status: 'PAID', collected_at: new Date() },
+      data: {
+        status: 'PAID',
+        collected_at: new Date(),
+        savings: numericSavings,
+      },
     });
+
     if (claimed.count === 0) {
       const error = new Error('এই কিস্তি আগেই আদায় হয়েছে');
       error.statusCode = 409;
@@ -207,7 +220,6 @@ async function collect({ somitiId, installmentId }) {
     const fine = Number(inst.fine_amount ?? 0);
     const totalCollected = amount + fine;
 
-    // bump the counter and read the loan terms in one query
     const loan = await tx.loan.update({
       where: { id: inst.loan_id },
       data: { completed_installment: { increment: 1 } },
@@ -240,6 +252,7 @@ async function collect({ somitiId, installmentId }) {
       data: {
         collected_amount: { increment: amount },
         due_amount: { decrement: amount },
+        savings: { increment: numericSavings },
       },
     });
 
@@ -252,12 +265,10 @@ async function collect({ somitiId, installmentId }) {
     }
 
     return {
-      installmentId: inst.id,
-      status: 'PAID',
-      amount,
-      fine,
-      loanCompleted,
+      message: 'কিস্তি আদায় হয়েছে',
+      status: 'PAID'
     };
+
   });
 }
 
