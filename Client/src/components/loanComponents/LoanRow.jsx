@@ -3,7 +3,7 @@ function getInitials(name) {
 }
 
 function LoanRow({ loan, onView, onEdit }) {
- console.log(loan);
+
   return (
     <tr className="hover:bg-[#F5F1E5]">
       <td className="sticky left-0 bg-[var(--bg-raised)] py-3 px-2.5 text-right border-b border-[var(--border)] whitespace-nowrap">

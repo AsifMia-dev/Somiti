@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import { SomitiContext } from "../context/SomitiContext";
 import { baseUrl } from "../helper/baseUrlHelper";
 import BackButton from "../components/BackButton";
+import PreviousLoanInfo from "../components/loanComponents/PreviousLoanInfo";
 
 function ArrowLeftIcon() {
   return (
@@ -37,6 +38,9 @@ function ProvideLoanPage() {
     total_installment: "",
     savings: "",
     frequency: "WEEKLY",
+    completed_installment: "",
+    loan_provided_date: "",
+    total_fine_collected:"0"
   });
   const [installmentAmount, setInstallmentAmount] = useState(0);
   const [errors, setErrors] = useState({});
@@ -44,16 +48,24 @@ function ProvideLoanPage() {
 
   useEffect(() => {
     if (!somiti?.id) return;
-    fetch(`${baseUrl}/borrowers/${somiti.id}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
+
+    const controller = new AbortController();
+
+    fetch(`${baseUrl}/borrowers/${somiti.id}/eligible?loan_type=${loanType}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    signal: controller.signal,
     })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setBorrowers(data.data)
-      })
-      .catch((err) => console.error(err));
-  },[]);
+    .then((res) => {
+      if (!res.ok) throw new Error("Failed to load borrowers");
+      return res.json();
+    })
+    .then((data) => setBorrowers(data.data ?? []))
+    .catch((err) => {
+      if (err.name !== "AbortError") console.error(err);
+    });
+
+    return () => controller.abort();
+  },[loanType]);
 
   useEffect(() => {
     const amount = parseFloat(form.loan_amount) || 0;
@@ -69,7 +81,19 @@ function ProvideLoanPage() {
   }, [form.loan_amount, form.interest_rate, form.total_installment]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "loan_provided_date") {
+      let formatted = value.replace(/[^0-9]/g, "");
+      if (formatted.length === 8) {
+        formatted = `${formatted.slice(0, 4)}-${formatted.slice(4, 6)}-${formatted.slice(6, 8)}`;
+      }
+      setForm({ ...form, [name]: formatted });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
+    
   };
 
   const validate = () => {
@@ -103,6 +127,10 @@ function ProvideLoanPage() {
             savings: Number(form.savings) || 0,
             frequency: form.frequency || "WEEKLY",
             borrower_id: form.borrower_id,
+            completed_installment: Number(form.completed_installment),
+            loan_provided_date: form.loan_provided_date,
+            total_fine_collected: Number(form.total_fine_collected)
+
           }),
         }),
         new Promise((resolve) => setTimeout(resolve, 1000)),
@@ -132,10 +160,43 @@ function ProvideLoanPage() {
 
         <div className="mb-6">
           <h1 className="text-[23px] mb-1">ঋণ প্রদান</h1>
-          <div className="text-sm text-[var(--text)]">নতুন ঋণ প্রদান করুন অথবা বিদ্যমান ঋণে টপ-আপ করুন</div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[var(--bg-raised)] border border-[var(--border)] rounded-[5px] p-9">
+                    <div className="flex gap-2.5 mb-[22px]">
+            <div
+              onClick={() => setLoanType("NEW")}
+              className={`flex-1 text-center py-3 rounded-[3px] border text-[13.5px] cursor-pointer ${
+                loanType === "NEW"
+                  ? "border-[var(--accent)] bg-[rgba(184,132,46,0.08)] text-[var(--text-h)] font-medium"
+                  : "border-[var(--border)] text-[var(--text)]"
+              }`}
+            >
+              নতুন ঋণ
+            </div>
+            <div
+              // onClick={() => setLoanType("RENEW")}
+              className={`flex-1 text-center py-3 rounded-[3px] border text-[13.5px] cursor-not-allowed ${
+                loanType === "RENEW"
+                  ? "border-[var(--accent)] bg-[rgba(184,132,46,0.08)] text-[var(--text-h)] font-medium"
+                  : "border-[var(--border)] text-[var(--text)]"
+              }`}
+            >
+              রিনিউ ঋণ
+            </div>
+            <div
+              onClick={() => setLoanType("EXISTING")}
+              className={`flex-1 text-center py-3 rounded-[3px] border text-[13.5px] cursor-pointer ${
+                loanType === "EXISTING"
+                  ? "border-[var(--accent)] bg-[rgba(184,132,46,0.08)] text-[var(--text-h)] font-medium"
+                  : "border-[var(--border)] text-[var(--text)]"
+              }`}
+            >
+             পূর্ববর্তী ঋণ
+            </div>
+          </div>
+          
+          
           <div className="text-right mb-[18px]">
             <label className="block text-xs text-[var(--text)] mb-1.5">
               ঋণগ্রহীতা নির্বাচন করুন <span className="text-[var(--danger)]">*</span>
@@ -149,34 +210,11 @@ function ProvideLoanPage() {
               <option value="">— নির্বাচন করুন —</option>
               {borrowers.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.full_name} — খাতা #{String(b.id).padStart(4, "0")}
+                  {b.full_name}
                 </option>
               ))}
             </select>
             {errors.borrower_id && <p className="text-[11.5px] text-[var(--danger)] mt-1">{errors.borrower_id}</p>}
-          </div>
-
-          <div className="flex gap-2.5 mb-[22px]">
-            <div
-              onClick={() => setLoanType("NEW")}
-              className={`flex-1 text-center py-3 rounded-[3px] border text-[13.5px] cursor-pointer ${
-                loanType === "NEW"
-                  ? "border-[var(--accent)] bg-[rgba(184,132,46,0.08)] text-[var(--text-h)] font-medium"
-                  : "border-[var(--border)] text-[var(--text)]"
-              }`}
-            >
-              নতুন ঋণ
-            </div>
-            <div
-              onClick={() => setLoanType("TOPUP")}
-              className={`flex-1 text-center py-3 rounded-[3px] border text-[13.5px] cursor-pointer ${
-                loanType === "TOPUP"
-                  ? "border-[var(--accent)] bg-[rgba(184,132,46,0.08)] text-[var(--text-h)] font-medium"
-                  : "border-[var(--border)] text-[var(--text)]"
-              }`}
-            >
-              টপ-আপ ঋণ
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -240,7 +278,9 @@ function ProvideLoanPage() {
           </div>
 
           <div className="text-right mb-[18px]">
-            <label className="block text-xs text-[var(--text)] mb-1.5">সঞ্চয় (৳)</label>
+            <label className="block text-xs text-[var(--text)] mb-1.5">
+              {loanType === "EXISTING" ? "মোট সঞ্চয় (৳)" : "সঞ্চয় (৳)"}
+            </label>
             <input
               type="text"
               name="savings"
@@ -251,18 +291,30 @@ function ProvideLoanPage() {
             />
          </div>
 
-         <div className="text-right mb-[18px]">
-            <label className="block text-xs text-[var(--text)] mb-1.5">
-              কিস্তির ধরন <span className="text-[var(--danger)]">*</span>
+         <div className="text-right mb-[25px]">
+          <label className="block text-xs text-[var(--text)] mb-1.5">
+            কিস্তির ধরন <span className="text-[var(--danger)]">*</span>
+          </label>
+          <div className="flex justify-end gap-5">
+            <label className="flex items-center gap-1.5 text-[13.5px] cursor-pointer">
+              <input
+                type="radio"
+                name="frequency"
+                value="WEEKLY"
+                checked={form.frequency === "WEEKLY"}
+                onChange={handleChange}
+              />
+              সাপ্তাহিক
             </label>
-            <select
-              name="frequency"
-              value={form.frequency}
-              onChange={handleChange}
-              className="w-full text-[13.5px] px-3.5 py-2.5 rounded-[3px] border border-[var(--border)] bg-[var(--bg)] text-right"
-            >
-              <option value="WEEKLY">সাপ্তাহিক</option>
-            </select>
+            <label className="flex items-center gap-1.5 text-[13.5px] text-[var(--text)] opacity-50 cursor-not-allowed">
+              <input type="radio" name="frequency" value="MONTHLY" disabled />
+              মাসিক
+            </label>
+          </div>
+
+          {loanType === "EXISTING" && (
+            <PreviousLoanInfo form={form} onChange={handleChange} />
+          )}
         </div>
 
           <div className="flex gap-2.5 mt-2">
@@ -271,7 +323,7 @@ function ProvideLoanPage() {
               disabled={loading}
               className="flex-1 text-sm font-medium py-3 rounded-[3px] bg-[var(--primary)] text-[#F6EFDD] hover:bg-[var(--primary-dark)] disabled:opacity-60"
             >
-              {loading ? "..." : "ঋণ প্রদান করুন"}
+            {loading ? "..." : loanType === "EXISTING" ? "ঋণ যুক্ত করুন" : "ঋণ প্রদান করুন"}
             </button>
             <button
               type="button"
