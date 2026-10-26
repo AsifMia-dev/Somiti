@@ -28,9 +28,23 @@ async function getBorrowers(req, res) {
   }
 }
 
+const getEligibleBorrowers = async (req, res, next) => {
+  try {
+    const data = await borrowerService.getEligibleBorrowers({
+      somitiId: req.params.somitiId,
+      loanType: req.query.loan_type,
+      userId: req.user.id,
+    });
+    res.status(200).json({ message: 'ঋণগ্রহীতার তালিকা পাওয়া গেছে', data });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 module.exports = {
   createBorrower,
   getBorrowers,
+  getEligibleBorrowers
 };
 

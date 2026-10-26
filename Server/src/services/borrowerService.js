@@ -72,8 +72,50 @@ async function getBorrowers(somitiId) {
   return { data: borrowers };
 }
 
+async function getEligibleBorrowers({ somitiId, loanType, userId }) {
+  const somiti = await prisma.somiti.findUnique({
+    where: { id: somitiId },
+    select: { id: true },
+  });
+  if (!somiti) {
+    const error = new Error('Not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const where = { somiti_id: somitiId };
+
+  if (loanType === 'NEW' || loanType === 'EXISTING') {
+    where.loans = { 
+      none: {
+         account: {
+           status: 'ACTIVE' 
+         } 
+      } 
+    };
+  } else if (loanType === 'RENEW') {
+    where.loans = {
+      some: {
+        account: { status: 'ACTIVE' }
+      }
+    };
+  } else {
+    const error = new Error('ঋণের ধরন অবশ্যই নতুন, নবায়ন অথবা বিদ্যমান হতে হবে।');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return prisma.borrower.findMany({
+    where,
+    select: { id: true, full_name: true },
+    orderBy: { full_name: 'asc' },
+  });
+}
+
+
 
 module.exports = {
   createBorrower,
   getBorrowers,
+  getEligibleBorrowers
 };
