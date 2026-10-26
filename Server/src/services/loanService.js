@@ -1,3 +1,4 @@
+const { CodeIcon } = require('lucide-react');
 const prisma = require('../lib/prisma');
 const installmentService = require('./installmentService');
 
@@ -13,20 +14,10 @@ function toNumber(value, fieldName) {
   return number;
 }
 
-function normalizeUuid(value, fieldName) {
-  const normalized = typeof value === 'string' ? value.trim() : '';
-  if (!normalized) {
-    const error = new Error(`${fieldName} is required`);
-    error.statusCode = 400;
-    throw error;
-  }
-  return normalized;
-}
 
 async function ensureBorrowerExists(borrowerId) {
-  const normalizedBorrowerId = normalizeUuid(borrowerId, 'borrowerId');
   const borrower = await prisma.borrower.findUnique({
-    where: { id: normalizedBorrowerId },
+    where: { id: borrowerId },
     include: { somiti: true },
   });
 
@@ -39,7 +30,7 @@ async function ensureBorrowerExists(borrowerId) {
   return borrower;
 }
 
-async function createNewLoan(payload) {
+async function createLoan(payload) {
   const {
     somitiId,
     loan_type,
@@ -49,30 +40,31 @@ async function createNewLoan(payload) {
     savings,
     frequency,
     borrower_id,
+    completed_installment,
+    loan_provided_date,
+    total_fine_collected,
   } = payload || {};
 
-  if (loan_type !== 'NEW') return { message: 'Loan must be new' };
 
   if (!loan_type || !loan_amount || !borrower_id || !interest_rate || !total_installment) {
-    const err = new Error('Missing required loan fields');
+    const err = new Error('প্রয়োজনীয় লোনের তথ্য অনুপস্থিত');
     err.statusCode = 400;
     throw err;
   }
 
-  const normalizedBorrowerId = normalizeUuid(borrower_id, 'borrower_id');
-  const borrower = await ensureBorrowerExists(normalizedBorrowerId);
 
-  const existingActiveNew = await prisma.loan.findFirst({
+  const borrower = await ensureBorrowerExists(borrower_id);
+  
+
+  const existingActive = await prisma.loan.findFirst({
     where: {
-      borrower_id: normalizedBorrowerId,
-      loan_type: 'NEW',
+      borrower_id,
       account: { status: 'ACTIVE' },
-    },
-    include: { account: true },
+    }
   });
 
-  if (existingActiveNew) {
-    const err = new Error('Borrower already has an active NEW loan');
+  if (existingActive) {
+    const err = new Error('গ্রহীতার ইতিমধ্যেই একটি সক্রিয় লোন রয়েছে, টপ আপ করুন');
     err.statusCode = 400;
     throw err;
   }
@@ -85,23 +77,32 @@ async function createNewLoan(payload) {
   const interest = loan_amt * (interestRate / 100);
   const accumulation = loan_amt + interest;
   const installment_amount = accumulation / totalInst;
-  const due_amount = accumulation - Savings;
+  
+  const completedInstallmentCount = loan_type === 'EXISTING'
+    ? toNumber(completed_installment, 'completed_installment')
+    : 0;
+
+  const due_amount = accumulation - (completedInstallmentCount * installment_amount);
+
+  const fine = loan_type === 'EXISTING'
+  ? toNumber(total_fine_collected, 'total_fine_collected')
+  : 0;
 
   const loanData = {
-    loan_type,
     loan_amount: loan_amt,
     interest_rate: interestRate,
     total_installment: totalInst,
+    completed_installment:completedInstallmentCount,
     frequency: frequency || 'WEEKLY',
-    borrower_id: normalizedBorrowerId,
+    borrower_id,
   };
 
   const LoanAccountData = {
     installment_amount,
     due_amount: Number(due_amount),
     savings: Savings,
-    collected_amount: 0,
-    fine: 0,
+    collected_amount: (completedInstallmentCount * installment_amount),
+    fine: fine,
     status: 'ACTIVE',
   };
 
@@ -111,16 +112,18 @@ async function createNewLoan(payload) {
     });
 
     if (!somitiFinance) {
-      const err = new Error('Somiti finance not found');
+      const err = new Error('সমিতি অর্থায়ন পাওয়া যায়নি');
       err.statusCode = 404;
       throw err;
     }
 
-    const availableCash = Number(somitiFinance.cash_balance || 0);
-    if (loan_amt > availableCash) {
-      const err = new Error('সমিতির নগদ ব্যালেন্স পর্যাপ্ত নয়');
-      err.statusCode = 400;
-      throw err;
+    if(loan_type == 'NEW'){
+      const availableCash = Number(somitiFinance.cash_balance || 0);
+      if (loan_amt > availableCash) {
+        const err = new Error('সমিতির ক্যাশ পর্যাপ্ত নয়');
+        err.statusCode = 400;
+        throw err;
+      }
     }
 
     const loan = await tx.loan.create({ data: loanData });
@@ -129,32 +132,54 @@ async function createNewLoan(payload) {
       data: { ...LoanAccountData, loan_id: loan.id },
     });
 
-    await tx.somitiFinance.update({
-      where: { somiti_id: borrower.somiti.id },
-      data: {
+    const outstandingPrincipal = loan_amt - (completedInstallmentCount * (loan_amt / totalInst));
+
+    // Update soitiFinance only when loan type new
+    const financeUpdateData = loan_type === 'EXISTING'
+    ? { loan_balance: { increment: outstandingPrincipal } }
+    : {
         cash_balance: { decrement: loan_amt },
         loan_balance: { increment: loan_amt },
-      },
+      };
+
+    await tx.somitiFinance.update({
+      where: { somiti_id: borrower.somiti.id },
+      data: financeUpdateData,
     });
 
-    await installmentService.generateInstallments(
+    const startDate = loan_type === 'EXISTING' ? new Date(loan_provided_date) : new Date();
+    // 
+    const created = await installmentService.generateInstallments(
       tx,
       loan.id,
       loan.borrower_id,
       installment_amount,
       loan.total_installment,
       loan.frequency,
+      startDate,
+      completedInstallmentCount
     );
 
-    return { message: 'Loan created successfully', data: loan };
+
+
+    const message = loan_type === 'EXISTING'
+      ? 'ঋণ সফলভাবে যুক্ত করা হয়েছে'
+      : 'ঋণ সফলভাবে প্রদান করা হয়েছে';
+
+      if (created.length !== loan.total_installment) {
+        const err = new Error('ইনস্টলমেন্ট তৈরিতে সমস্যা হয়েছে');
+        err.statusCode = 500;
+        throw err;
+      }
+
+      return { message };
   });
 }
 
 async function getAllLoans(somitiId) {
-  const normalizedSomitiId = normalizeUuid(somitiId, 'somitiId');
-  
+
   const loanData = await prisma.loanAccount.findMany({
-  where: { loan: { borrower: { somiti_id: normalizedSomitiId } } },
+  where: { loan: { borrower: { somiti_id: somitiId } } },
   select: {
         collected_amount: true,
         due_amount: true,
@@ -177,13 +202,11 @@ async function getAllLoans(somitiId) {
         },
       },
     });
-
-    console.log(loanData)
-
+    
     return loanData;
 }
 
 module.exports = {
-  createNewLoan,
+  createLoan,
   getAllLoans,
 };

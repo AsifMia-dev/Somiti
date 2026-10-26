@@ -12,9 +12,14 @@ async function createLoan(req, res) {
       savings,
       frequency,
       borrower_id,
+      completed_installment,
+      loan_provided_date,
+      total_fine_collected,
     } = req.body;
 
-    const result = await loanService.createNewLoan({
+    console.log("completed installment",completed_installment);
+
+    const result = await loanService.createLoan({
       somitiId,
       loan_type,
       loan_amount,
@@ -24,6 +29,9 @@ async function createLoan(req, res) {
       savings,
       frequency,
       borrower_id,
+      completed_installment,
+      loan_provided_date,
+      total_fine_collected
     });
 
     return res.status(201).json(result);

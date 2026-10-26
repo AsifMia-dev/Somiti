@@ -5,11 +5,11 @@ const DAY_MAP = {
   THURSDAY: 4, FRIDAY: 5, SATURDAY: 6,
 };
 
-function getFirstDueDate(frequency, collectionDay, monthlyCollectionDate) {
+function getFirstDueDate(frequency, collectionDay, monthlyCollectionDate,startDate) {
   if (frequency === 'WEEKLY') {
     const targetDay = DAY_MAP[collectionDay];
 
-    const date = new Date();
+    const date = new Date(startDate);
     const currentDay = date.getDay();
     let daysUntil = (targetDay - currentDay + 7) % 7;
     if (daysUntil === 0) daysUntil = 7;
@@ -33,9 +33,8 @@ function getFirstDueDate(frequency, collectionDay, monthlyCollectionDate) {
   throw new Error(`Unsupported frequency: ${frequency}`);
 }
 
-
-
-async function generateInstallments(tx, loan_id, borrower_id, installment_amount, total_installment, frequency){
+      
+async function generateInstallments(tx, loan_id, borrower_id, installment_amount, total_installment, frequency,startDate,completedInstallmentCount){
     const borrower = await tx.borrower.findUnique({
         where: { id: borrower_id },
         include: { somiti: true },
@@ -43,7 +42,7 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
 
     const { collection_day, monthly_collection_date } = borrower.somiti;
     
-    const firstDueDate = getFirstDueDate(frequency, collection_day, monthly_collection_date);
+    const firstDueDate = getFirstDueDate(frequency, collection_day, monthly_collection_date,startDate);
 
     const installments = [];
 
@@ -56,12 +55,16 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
       dueDate.setMonth(dueDate.getMonth() + i);
     }
 
+    const status = i < completedInstallmentCount  ? 'PAID' : 'PENDING'
+    completedInstallmentCount--;
+
     installments.push({
       installNo: i + 1,
       due_date: dueDate,
       installment_amount,
-      status: 'PENDING',
+      status,
       fine_amount: 0,
+      collected_at: status === 'PAID' ? dueDate : null,
       borrower_id,
       loan_id,
     });
