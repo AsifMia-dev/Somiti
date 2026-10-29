@@ -1,4 +1,3 @@
-const { CodeIcon } = require('lucide-react');
 const prisma = require('../lib/prisma');
 const installmentService = require('./installmentService');
 
