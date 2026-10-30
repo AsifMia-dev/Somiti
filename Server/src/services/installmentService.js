@@ -56,7 +56,6 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
     }
 
     const status = i < completedInstallmentCount  ? 'PAID' : 'PENDING'
-    completedInstallmentCount--;
 
     installments.push({
       installNo: i + 1,
@@ -72,11 +71,9 @@ async function generateInstallments(tx, loan_id, borrower_id, installment_amount
 
   if (installments.length === 0) return [];
 
-  const created = [];
-  for (const inst of installments) {
-    const rec = await tx.installment.create({ data: inst });
-    created.push(rec);
-  }
+  const created = await tx.installment.createManyAndReturn({
+    data: installments,
+  });
 
   return created;
 }
@@ -91,6 +88,19 @@ function normalizeUuid(value, fieldName) {
     throw error;
   }
   return normalized;
+}
+
+
+function weekSummarize(rows) {
+  let expected = 0;
+  let collected = 0;
+
+  for (const r of rows) {
+    expected += Number(r.installment_amount);
+    if (r.status === 'PAID') collected += Number(r.installment_amount); // use your real enum value
+  }
+
+  return { expected, collected, pending: expected - collected };
 }
 
 async function fetchInstallmentsDue(somitiId, collectionDate, lastCollectionDate) {
@@ -117,11 +127,18 @@ async function fetchInstallmentsDue(somitiId, collectionDate, lastCollectionDate
       savings:true
     },
   });
-  return {
-    thisWeek: rows.filter((r) => r.due_date > lastCollectionDate),
-    overdue: rows.filter((r) => r.due_date <= lastCollectionDate),
 
-  };
+  const weekSummary = weekSummarize(rows);
+  const thisWeek = rows.filter((r) => r.due_date > lastCollectionDate);
+  const overdue = rows.filter((r) => r.due_date <= lastCollectionDate);
+
+  return{
+    weekSummary,
+    thisWeek,
+    overdue
+  }
+  
+
 }
 
 const getCollectionDate = (collectionDay, monthlyCollectionDate, frequency) => {
@@ -177,9 +194,9 @@ async function getCollectionSheet({ somitiId }) {
   const lastCollectionDate = new Date(collectionInfo.collectionDate);
   lastCollectionDate.setDate(lastCollectionDate.getDate() - 7);
 
-  const installments = await fetchInstallmentsDue(normalizedSomitiId, collectionInfo.collectionDate, lastCollectionDate);
-
-  return { collectionInfo, installments };
+  const installmentDetails = await fetchInstallmentsDue(normalizedSomitiId, collectionInfo.collectionDate, lastCollectionDate);
+  
+  return { collectionInfo, installmentDetails };
 }
 
 async function collect({ somitiId, installmentId, savings }) {

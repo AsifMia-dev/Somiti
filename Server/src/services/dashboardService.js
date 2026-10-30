@@ -1,14 +1,10 @@
 const prisma = require('../lib/prisma');
 
-async function getBalanceSummary(somitiId) {
-  const id = typeof somitiId === 'string' ? somitiId.trim() : '';
-  if (!id) {
-    const err = new Error('Invalid somiti id');
-    err.statusCode = 400;
-    throw err;
-  }
+const {getCollectionDate} = require('./installmentService')
 
-  const finance = await prisma.somitiFinance.findUnique({ where: { somiti_id: id } });
+async function getBalanceSummary(somitiId) {
+
+  const finance = await prisma.somitiFinance.findUnique({ where: { somiti_id: somitiId } });
   if (!finance) {
     const err = new Error('Somiti finance not found');
     err.statusCode = 404;
@@ -18,6 +14,7 @@ async function getBalanceSummary(somitiId) {
     ...finance,
   };
 }
+
 
 module.exports = {
   getBalanceSummary,
