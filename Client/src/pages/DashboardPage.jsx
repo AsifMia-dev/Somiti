@@ -8,6 +8,7 @@ import CollectionFlag from "../components/dashboardComponent/CollectionFlag";
 import TodaysLedgerTable from "../components/dashboardComponent/TodaysLedgerTable";
 import QuickActions from "../components/dashboardComponent/QuickActions";
 import OverdueTable from "../components/dashboardComponent/OverdueTable";
+import WeekSummary from "../components/dashboardComponent/WeekSummary";
 import { toast } from "sonner"
 
 function DashboardPage() {
@@ -25,6 +26,8 @@ function DashboardPage() {
   const [overdue, setOverdue] = useState([]);
   const [collectingId, setCollectingId] = useState(null);
   const [savingValue, setSavingValue] = useState({});
+  const [weekSummary , setWeekSummary] = useState({})
+
 
   const loadDashboard = useCallback(async () => {
     if (!somiti?.id || !accessToken) return;
@@ -49,17 +52,21 @@ function DashboardPage() {
 
       const summaryJson = await summaryRes.json();
       const installmentJson = await installmentRes.json();
+      console.log("Installment",installmentJson);
 
       setSummary(summaryJson.data);
-      setInstallments(installmentJson.installments.thisWeek ?? []);
+      setInstallments(installmentJson.installmentDetails.thisWeek ?? []);
+      setOverdue(installmentJson.installmentDetails.overdue ?? []);
+      setWeekSummary({...installmentJson.installmentDetails.weekSummary});
       setCollectionInfo(installmentJson.collectionInfo ?? {});
-      setOverdue(installmentJson.installments.overdue ?? []);
+
     } catch (err) {
       if (err.name !== "AbortError") console.error(err);
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
   }, [somiti?.id, accessToken]);
+
 
   useEffect(() => {
     loadDashboard();
@@ -69,6 +76,7 @@ function DashboardPage() {
   const handleSavingChange = (installmentId, value) => {
     setSavingValue((prev) => ({ ...prev, [installmentId]: value }));
   };
+
 
   const handleCollect = async (installmentId) => {
     setCollectingId(installmentId);
@@ -115,7 +123,8 @@ function DashboardPage() {
 
       <NetWorthHero finance={summary} />
       <StatsGrid finance={summary} />
-      
+      <WeekSummary weekSummary={weekSummary} />
+
      <div className={overdue.length > 0 ? "grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5" : ""}>
         <TodaysLedgerTable
           installments={installments}
