@@ -34,7 +34,7 @@ function OverdueTable({ overdue, onCollect, collectingId }) {
   return (
     <div className="bg-[var(--bg-raised)] border border-[var(--border)] rounded px-6 pt-5.5 pb-2.5 mb-6.5">
       <div className="flex justify-between items-baseline mb-3.5">
-        <h3 className="text-[16.5px] text-red-500">
+        <h3 className="text-[16.5px] text-[var(--danger)]">
           বকেয়া কিস্তি
         </h3>
 
